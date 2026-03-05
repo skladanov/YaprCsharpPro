@@ -2,6 +2,6 @@ public interface IEventService
 {
     List<Event> GetAllEvents();
     Event GetEvent(int Id);
-    bool CreateEvent(Event evet);
-    bool DeleteEvent(int Id);
+    void CreateEvent(Event evet);
+    void DeleteEvent(int Id);
 }
