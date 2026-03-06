@@ -1,7 +1,7 @@
 public interface IEventService
 {
-    List<Event> GetAllEvents();
+    ICollection<Event> GetAllEvents();
     Event GetEvent(int Id);
-    void CreateEvent(Event evet);
+    void AddEvent(Event evet);
     void DeleteEvent(int Id);
 }
