@@ -1,7 +1,8 @@
 public interface IEventService
 {
     ICollection<Event> GetAllEvents();
-    Event GetEvent(int Id);
-    void AddEvent(Event evet);
-    void DeleteEvent(int Id);
+    Event? GetEvent(int id);
+    bool AddEvent(Event eventItem);
+    bool UpdateEvent(Event eventItem, int id);
+    bool DeleteEvent(int id);
 }

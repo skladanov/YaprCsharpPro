@@ -6,28 +6,37 @@ public class LocalEventRepository : IEventRepository
     {
         return _events;
     }
-    public Event GetEvent(int id)
+    public Event? GetEvent(int id)
     {
-        var eventItem = _events.FirstOrDefault(e => e.Id == id);
-        if (eventItem == null)
-            throw new KeyNotFoundException($"Event with ID {id} not found.");
-
-        return eventItem;
+        return _events.FirstOrDefault(e => e.Id == id);
     }
-    public void AddEvent(Event eventItem)
+    public bool AddEvent(Event eventItem)
     {
-        if(eventItem == null)
-            throw new ArgumentNullException(nameof(eventItem));
 
-        if(_events.Any(e => e.Id == eventItem.Id))
-            throw new InvalidOperationException($"Event with ID {eventItem.Id} already exists.");
+        if (_events.Any(e => e.Id == eventItem.Id))
+            return false;
 
         _events.Add(eventItem);
+        return true;
     }
 
-    public void DeleteEvent(int id)
+    public bool UpdateEvent(Event newEvent, int id)
+    {
+        var oldEvent = GetEvent(id);
+        if (oldEvent == null) return false;
+
+        oldEvent.Title = newEvent.Title;
+        oldEvent.Description = newEvent.Description;
+        oldEvent.StartAt = newEvent.StartAt;
+        oldEvent.EndAt = newEvent.EndAt;
+        return true;
+    }
+
+    public bool DeleteEvent(int id)
     {
         var eventItem = GetEvent(id);
+        if (eventItem == null) return false;
         _events.Remove(eventItem);
+        return true;
     }
 }

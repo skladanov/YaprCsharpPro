@@ -8,16 +8,20 @@ public class EventService : IEventService
     {
         return _repository.GetAllEvents();
     }
-    public Event GetEvent(int id)
+    public Event? GetEvent(int id)
     {
         return _repository.GetEvent(id);
     }
-    public void AddEvent(Event eventItem)
+    public bool AddEvent(Event eventItem)
     {
-        _repository.AddEvent(eventItem);
+        return _repository.AddEvent(eventItem);
     }
-    public void DeleteEvent(int id)
+    public bool UpdateEvent(Event eventItem, int id)
     {
-        _repository.DeleteEvent(id);
+        return _repository.UpdateEvent(eventItem, id);
+    }
+    public bool DeleteEvent(int id)
+    {
+        return _repository.DeleteEvent(id);
     }
 }
