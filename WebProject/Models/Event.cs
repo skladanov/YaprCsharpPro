@@ -8,14 +8,6 @@ public class Event
     [Required]
     public DateTime StartAt { get; set; }
     [Required]
-    public DateTime EndAt
-    {
-        get;
-        set
-        {
-            if (value <= StartAt)
-                throw new ArgumentException("EndAt must be greater than StartAt");
-            field = value;
-        }
-    }
+    public DateTime EndAt { get; set; }
+
 }
