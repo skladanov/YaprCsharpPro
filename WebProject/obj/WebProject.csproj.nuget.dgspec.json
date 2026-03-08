@@ -46,9 +46,9 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
-            "Microsoft.AspNetCore.OpenApi": {
+            "Swashbuckle.AspNetCore": {
               "target": "Package",
-              "version": "[9.0.11, )"
+              "version": "[10.1.4, )"
             }
           },
           "imports": [
