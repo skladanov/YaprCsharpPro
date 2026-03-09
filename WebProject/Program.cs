@@ -5,8 +5,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAutoMapper(typeof(EventMappingProfile));
 builder.Services.AddSingleton<IEventService, EventService>();
 builder.Services.AddSingleton<IEventRepository, LocalEventRepository>();
-builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
