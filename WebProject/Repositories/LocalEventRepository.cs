@@ -1,42 +1,53 @@
+using AutoMapper;
+using Microsoft.AspNetCore.Mvc.Diagnostics;
+
 public class LocalEventRepository : IEventRepository
 {
-    private readonly ICollection<Event> _events = new List<Event>();
+    private readonly IMapper _mapper;
+    Dictionary<int, Event> _events = new();
+    private int _nextId = 1;
+
+    public LocalEventRepository(IMapper mapper)
+    {
+        _mapper = mapper;
+    }
 
     public ICollection<Event> GetAllEvents()
     {
-        return _events;
+        return _events.Values.ToList<Event>();
     }
     public Event? GetEvent(int id)
     {
-        return _events.FirstOrDefault(e => e.Id == id);
+        _events.TryGetValue(id, out var eventItem);
+        return eventItem;
     }
-    public bool AddEvent(Event eventItem)
+    public Event AddEvent(EventDto eventDto)
     {
+        Event newEventItem = new Event{
+            Id = _nextId++,
+            Title = eventDto.Title,
+            Description = eventDto.Description,
+            StartAt = eventDto.StartAt,
+            EndAt = eventDto.EndAt
+        };
 
-        if (_events.Any(e => e.Id == eventItem.Id))
+        _events[newEventItem.Id] = newEventItem;
+        return newEventItem;
+    }
+
+    public bool UpdateEvent(EventDto newEventData, int id)
+    {
+        if (!_events.ContainsKey(id))
             return false;
 
-        _events.Add(eventItem);
-        return true;
-    }
+        Event existingEvent = _events[id];
+        _mapper.Map(newEventData, existingEvent);
 
-    public bool UpdateEvent(Event newEvent, int id)
-    {
-        var oldEvent = GetEvent(id);
-        if (oldEvent == null) return false;
-
-        oldEvent.Title = newEvent.Title;
-        oldEvent.Description = newEvent.Description;
-        oldEvent.StartAt = newEvent.StartAt;
-        oldEvent.EndAt = newEvent.EndAt;
         return true;
     }
 
     public bool DeleteEvent(int id)
     {
-        var eventItem = GetEvent(id);
-        if (eventItem == null) return false;
-        _events.Remove(eventItem);
-        return true;
+        return _events.Remove(id);
     }
 }

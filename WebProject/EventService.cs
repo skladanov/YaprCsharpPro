@@ -1,8 +1,13 @@
+using AutoMapper;
+
 public class EventService : IEventService
 {
     private readonly IEventRepository _repository;
 
-    public EventService(IEventRepository repository) {  _repository = repository; }
+    public EventService(IEventRepository repository) 
+    {
+        _repository = repository;
+    }
 
     public ICollection<Event> GetAllEvents()
     {
@@ -12,13 +17,13 @@ public class EventService : IEventService
     {
         return _repository.GetEvent(id);
     }
-    public bool AddEvent(Event eventItem)
+    public Event AddEvent(EventDto newEventData)
     {
-        return _repository.AddEvent(eventItem);
+        return _repository.AddEvent(newEventData);
     }
-    public bool UpdateEvent(Event eventItem, int id)
+    public bool UpdateEvent(EventDto newEventData, int id)
     {
-        return _repository.UpdateEvent(eventItem, id);
+        return _repository.UpdateEvent(newEventData, id);
     }
     public bool DeleteEvent(int id)
     {
