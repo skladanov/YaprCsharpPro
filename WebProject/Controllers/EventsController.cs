@@ -89,13 +89,6 @@ public class EventsController : ControllerBase
                 return NotFound(new { error = $"Event with ID {id} not found" });
 
         var removingEvent = _eventService.GetEvent(id);
-        if (removingEvent != null)
-        {
-            return StatusCode(500, new
-            {
-                error = "Failed to delete event"
-            });
-        }
 
         return Ok(new { message = $"Event with ID {id} successfully deleted" });
     }
