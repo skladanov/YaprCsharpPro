@@ -1,5 +1,4 @@
 using AutoMapper;
-using Microsoft.AspNetCore.Mvc.Diagnostics;
 
 public class LocalEventRepository : IEventRepository
 {

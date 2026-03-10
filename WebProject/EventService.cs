@@ -8,7 +8,6 @@ public class EventService : IEventService
     {
         _repository = repository;
     }
-
     public ICollection<Event> GetAllEvents()
     {
         return _repository.GetAllEvents();
