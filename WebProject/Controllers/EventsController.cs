@@ -12,9 +12,12 @@ public class EventsController : ControllerBase
     }
 
     [HttpGet]
-    public ActionResult<ICollection<Event>> GetAllEvents()
+    public ActionResult<ICollection<Event>> GetAllEvents(
+        [FromQuery] string? title, 
+        [FromQuery] DateTime? from, 
+        [FromQuery] DateTime? to)
     {
-        return Ok(_eventService.GetAllEvents());
+        return Ok(_eventService.GetAllEvents(title, from, to));
     }
 
     [HttpGet("{id:int}")]

@@ -8,9 +8,20 @@ public class EventService : IEventService
     {
         _repository = repository;
     }
-    public ICollection<Event> GetAllEvents()
+    public ICollection<Event> GetAllEvents(string? title = "" , DateTime? from = null, DateTime? to = null)
     {
-        return _repository.GetAllEvents();
+        var query = _repository.GetAllEvents().AsQueryable();
+
+        if (!string.IsNullOrEmpty(title))
+            query = query.Where(e => e.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
+
+        if (from.HasValue)
+            query = query.Where(e => e.StartAt >= from.Value);
+
+        if (to.HasValue)
+            query = query.Where(e => e.EndAt <= to.Value);
+
+        return query.ToList();
     }
     public Event? GetEvent(int id)
     {
