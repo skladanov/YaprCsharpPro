@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -13,11 +14,13 @@ public class EventsController : ControllerBase
 
     [HttpGet]
     public ActionResult<ICollection<Event>> GetAllEvents(
-        [FromQuery] string? title, 
-        [FromQuery] DateTime? from, 
-        [FromQuery] DateTime? to)
+        [FromQuery] string? title = null, 
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null,
+        [FromQuery, Range(1, int.MaxValue)] int page = 1,
+        [FromQuery, Range(1, int.MaxValue)] int pageSize = 10)
     {
-        return Ok(_eventService.GetAllEvents(title, from, to));
+        return Ok(_eventService.GetAllEvents(page, pageSize, title, from, to));
     }
 
     [HttpGet("{id:int}")]

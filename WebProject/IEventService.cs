@@ -1,6 +1,6 @@
 public interface IEventService
 {
-    ICollection<Event> GetAllEvents(string? title = null, DateTime? from = null, DateTime? to = null);
+    PaginatedResult<Event> GetAllEvents(int page, int pageSize, string? title, DateTime? from, DateTime? to);
     Event? GetEvent(int id);
     Event AddEvent(EventDto newEventData);
     bool UpdateEvent(EventDto newEventData, int id);

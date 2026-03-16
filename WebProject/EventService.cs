@@ -8,7 +8,7 @@ public class EventService : IEventService
     {
         _repository = repository;
     }
-    public ICollection<Event> GetAllEvents(string? title = "" , DateTime? from = null, DateTime? to = null)
+    public PaginatedResult<Event> GetAllEvents(int page, int pageSize, string? title, DateTime? from, DateTime? to)
     {
         var query = _repository.GetAllEvents().AsQueryable();
 
@@ -21,7 +21,22 @@ public class EventService : IEventService
         if (to.HasValue)
             query = query.Where(e => e.EndAt <= to.Value);
 
-        return query.ToList();
+        var totalCount = query.Count();
+        var offset = (page - 1) * pageSize;
+
+        var items = query
+            .OrderBy(e => e.StartAt)
+            .Skip(offset)
+            .Take(pageSize)
+            .ToList();
+
+        return new PaginatedResult<Event>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
     }
     public Event? GetEvent(int id)
     {
