@@ -1,13 +1,16 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Mvc.Diagnostics;
+using System.Runtime.InteropServices;
 
 public class EventService : IEventService
 {
     private readonly IEventRepository _repository;
 
-    public EventService(IEventRepository repository) 
+    public EventService(IEventRepository repository)
     {
         _repository = repository;
     }
+
     public PaginatedResult<Event> GetAllEvents(int page, int pageSize, string? title, DateTime? from, DateTime? to)
     {
         var query = _repository.GetAllEvents().AsQueryable();
@@ -38,20 +41,98 @@ public class EventService : IEventService
             PageSize = pageSize
         };
     }
+
     public Event? GetEvent(int id)
     {
-        return _repository.GetEvent(id);
+        var existingEvent = _repository.GetEvent(id);
+
+        if (existingEvent == null)
+            throw new EventNotFoundException(id);
+
+        return existingEvent;
     }
+
     public Event AddEvent(EventDto newEventData)
     {
-        return _repository.AddEvent(newEventData);
+        ValidateRequestEvent(newEventData);
+
+        checkDuplicateEvent(newEventData);
+
+        var createdEvent = _repository.AddEvent(newEventData);
+
+        if (createdEvent == null)
+            throw new ExternalException("Failed to create event");
+
+        return createdEvent;
     }
-    public bool UpdateEvent(EventDto newEventData, int id)
+
+    public void UpdateEvent(EventDto newEventData, int id)
     {
-        return _repository.UpdateEvent(newEventData, id);
+        ValidateRequestEvent(newEventData);
+
+        if (GetEvent(id) == null)
+            throw new EventNotFoundException(id);
+
+        if (!_repository.UpdateEvent(newEventData, id))
+            throw new ExternalException("Failed to update event");
     }
-    public bool DeleteEvent(int id)
+
+    public  void DeleteEvent(int id)
     {
-        return _repository.DeleteEvent(id);
+        if (GetEvent(id) == null)
+            throw new EventNotFoundException(id);
+
+        if(!_repository.DeleteEvent(id))
+            throw new ExternalException("Failed to delete event");
+    }
+
+    private void ValidateRequestEvent(EventDto newEventData)
+    {
+        if(newEventData == null)
+            throw new ValidationException("", "Request body is empty");
+
+        var errors = new Dictionary<string, string[]>();
+
+        if (string.IsNullOrWhiteSpace(newEventData.Title))
+        {
+            errors["title"] = new[] { "Title is requaried" };
+        }
+
+        if (newEventData.StartAt == default)
+        {
+            errors["startAt"] = new[] { "The start date is required" };
+        }
+        else if (newEventData.StartAt < DateTime.UtcNow)
+        {
+            errors["startAt"] = new[] { "The start date cannot be in the past" };
+        }
+
+        if (newEventData.EndAt == default)
+        {
+            errors["endAt"] = new[] { "The end date is required" };
+        }
+        if (newEventData.EndAt <= newEventData.StartAt)
+        {
+            errors["endAt"] = new[] { "The end date must be later than the start date" };
+        }
+
+        if (errors.Count > 0)
+        {
+            throw new ValidationException(errors);
+        }
+    }
+
+    private void checkDuplicateEvent(EventDto eventDto)
+    {
+        var results = _repository.GetAllEvents().Where(e =>
+        e.Title == eventDto.Title &&
+        e.StartAt == eventDto.StartAt &&
+        e.EndAt == eventDto.EndAt).ToList();
+
+        if (results == null) return;
+
+        var result = results.FirstOrDefault();
+        if (result != null)
+            throw new DuplicateEventException(result.Title);
     }
 }
