@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "dgSpecHash": "p18EggKr3Jc=",
+  "success": false,
+  "projectFilePath": "C:\\yap\\WebProject.Tests\\WebProject.Tests.csproj",
+  "expectedPackageFiles": [],
+  "logs": [
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Не удалось загрузить индекс службы для источника https://api.nuget.org/v3/index.json.\r\n  Произошла ошибка при отправке запроса.\r\n  Невозможно соединиться с удаленным сервером\r\n  Попытка установить соединение была безуспешной, т.к. от другого компьютера за требуемое время не получен нужный отклик, или было разорвано уже установленное соединение из-за неверного отклика уже подключенного компьютера 13.107.213.53:443",
+      "projectPath": "C:\\yap\\WebProject.Tests\\WebProject.Tests.csproj",
+      "filePath": "C:\\yap\\WebProject.Tests\\WebProject.Tests.csproj",
+      "libraryId": "xunit.runner.visualstudio",
+      "targetGraphs": []
+    }
+  ]
+}

@@ -15,11 +15,13 @@ public class LocalEventRepository : IEventRepository
     {
         return _events.Values.ToList<Event>();
     }
+
     public Event? GetEvent(int id)
     {
         _events.TryGetValue(id, out var eventItem);
         return eventItem;
     }
+
     public Event AddEvent(EventDto eventDto)
     {
         Event newEventItem = new Event{
