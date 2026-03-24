@@ -1,9 +1,10 @@
 using AutoMapper;
+using System.Linq.Expressions;
 
 public class LocalEventRepository : IEventRepository
 {
     private readonly IMapper _mapper;
-    Dictionary<int, Event> _events = new();
+    List<Event> _events = new();
     private int _nextId = 1;
 
     public LocalEventRepository(IMapper mapper)
@@ -11,15 +12,15 @@ public class LocalEventRepository : IEventRepository
         _mapper = mapper;
     }
 
-    public ICollection<Event> GetAllEvents()
+    public ICollection<Event> GetAllEvents(Expression<Func<Event, bool>> predicate)
     {
-        return _events.Values.ToList<Event>();
+
+        return _events.Where(predicate.Compile()).ToList();
     }
 
     public Event? GetEvent(int id)
     {
-        _events.TryGetValue(id, out var eventItem);
-        return eventItem;
+        return _events.Where(e => e.Id == id).FirstOrDefault();
     }
 
     public Event AddEvent(EventDto eventDto)
@@ -32,16 +33,16 @@ public class LocalEventRepository : IEventRepository
             EndAt = eventDto.EndAt
         };
 
-        _events[newEventItem.Id] = newEventItem;
+        _events.Add(newEventItem);
         return newEventItem;
     }
 
     public bool UpdateEvent(EventDto newEventData, int id)
     {
-        if (!_events.ContainsKey(id))
+        var existingEvent = GetEvent(id);
+        if (existingEvent == null)
             return false;
 
-        Event existingEvent = _events[id];
         _mapper.Map(newEventData, existingEvent);
 
         return true;
@@ -49,6 +50,12 @@ public class LocalEventRepository : IEventRepository
 
     public bool DeleteEvent(int id)
     {
-        return _events.Remove(id);
+        var existingEvent = GetEvent(id);
+
+        if (existingEvent == null) return false;
+
+        _events.Remove(existingEvent);
+
+        return true;
     }
 }
