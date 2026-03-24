@@ -12,10 +12,15 @@ public class LocalEventRepository : IEventRepository
         _mapper = mapper;
     }
 
-    public ICollection<Event> GetAllEvents(Expression<Func<Event, bool>> predicate)
+    public ICollection<Event> GetAllEvents(string? title, DateTime? from, DateTime? to)
     {
-
-        return _events.Where(predicate.Compile()).ToList();
+        return _events
+        .Where(e =>
+            (string.IsNullOrEmpty(title) ||
+                e.Title.Contains(title, StringComparison.OrdinalIgnoreCase)) &&
+            (!from.HasValue || e.StartAt >= from.Value) &&
+            (!to.HasValue || e.EndAt <= to.Value))
+        .ToList();
     }
 
     public Event? GetEvent(int id)
