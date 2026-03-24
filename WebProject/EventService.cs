@@ -13,15 +13,9 @@ public class EventService : IEventService
         _repository = repository;
     }
 
-    public PaginatedResult<Event> GetAllEvents(int page = 1, int pageSize = 10, string title = null, DateTime? from = null, DateTime? to = null)
+    public PaginatedResult<Event> GetAllEvents(int page = 1, int pageSize = 10, string? title = null, DateTime? from = null, DateTime? to = null)
     {
-        Expression<Func<Event, bool>> predicate = e =>
-        (string.IsNullOrEmpty(title) ||
-            e.Title.Contains(title, StringComparison.OrdinalIgnoreCase)) &&
-        (!from.HasValue || e.StartAt >= from.Value) &&
-        (!to.HasValue || e.EndAt <= to.Value);
-
-        ICollection<Event> allEvents = _repository.GetAllEvents(predicate);
+        ICollection<Event> allEvents = _repository.GetAllEvents(title, from, to);
 
         var totalCount = allEvents.Count;
         var offset = (page - 1) * pageSize;
@@ -55,8 +49,6 @@ public class EventService : IEventService
     {
         ValidateRequestEvent(newEventData);
 
-        checkDuplicateEvent(newEventData);
-
         var createdEvent = _repository.AddEvent(newEventData);
 
         if (createdEvent == null)
@@ -76,18 +68,18 @@ public class EventService : IEventService
             throw new ExternalException("Failed to update event");
     }
 
-    public  void DeleteEvent(int id)
+    public void DeleteEvent(int id)
     {
         if (GetEvent(id) == null)
             throw new EventNotFoundException(id);
 
-        if(!_repository.DeleteEvent(id))
+        if (!_repository.DeleteEvent(id))
             throw new ExternalException("Failed to delete event");
     }
 
     private void ValidateRequestEvent(EventDto newEventData)
     {
-        if(newEventData == null)
+        if (newEventData == null)
             throw new ValidationException("", "Request body is empty");
 
         var errors = new Dictionary<string, string[]>();
@@ -119,19 +111,5 @@ public class EventService : IEventService
         {
             throw new ValidationException(errors);
         }
-    }
-
-    private void checkDuplicateEvent(EventDto eventDto)
-    {
-        var results = _repository.GetAllEvents().Where(e =>
-        e.Title == eventDto.Title &&
-        e.StartAt == eventDto.StartAt &&
-        e.EndAt == eventDto.EndAt).ToList();
-
-        if (results == null) return;
-
-        var result = results.FirstOrDefault();
-        if (result != null)
-            throw new DuplicateEventException(result.Title);
     }
 }
