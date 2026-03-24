@@ -85,10 +85,32 @@ public class EventServiceTests
     public void UpdateExistingEvent_Succeeds()
     {
         // Arrange
+        var existsEvent = new Event
+        {
+            Id = 1,
+            Title = "TitleString",
+            StartAt = DateTime.Parse("2026-04-10"),
+            EndAt = DateTime.Parse("2026-04-11")
+        };
+        var newEventData = new EventDto
+        {
+            Title = "UpdatedTitle",
+            StartAt = DateTime.Parse("2026-04-10"),
+            EndAt = DateTime.Parse("2026-04-11")
+        };
+        _mockRepository.Setup(m => m.GetEvent(It.IsAny<int>())).Returns(existsEvent);
+        _mockRepository.Setup(m => m.UpdateEvent(It.IsAny<EventDto>(), It.IsAny<int>())).Returns(true);
 
         // Act
+        _service.UpdateEvent(newEventData, 1);
 
         // Assert
+        _mockRepository.Verify(m => m.UpdateEvent(It.Is<EventDto>(dto =>
+            dto.Title == "UpdatedTitle" &&
+            dto.StartAt == DateTime.Parse("2026-04-10") &&
+            dto.EndAt == DateTime.Parse("2026-04-11")),
+        It.Is<int>(id => id == 1)),
+        Times.Once);
     }
 
     // 5. удаление существующего события
