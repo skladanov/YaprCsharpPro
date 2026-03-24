@@ -63,10 +63,21 @@ public class EventServiceTests
     public void GetEventById_Succeeds()
     {
         // Arrange
+        var eventResult = new Event
+        {
+            Id = 1,
+            Title = "TitleString",
+            StartAt = DateTime.Parse("2026-04-10"),
+            EndAt = DateTime.Parse("2026-04-11")
+        };
+        _mockRepository.Setup(m => m.GetEvent(It.IsAny<int>())).Returns(eventResult);
 
         // Act
+        var result = _service.GetEvent(1);
 
         // Assert
+        Assert.IsAssignableFrom<Event>(result);
+        Assert.Equal(eventResult.Title, result.Title);
     }
 
     // 4. обновление существующего события
