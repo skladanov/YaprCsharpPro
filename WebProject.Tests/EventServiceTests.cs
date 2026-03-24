@@ -18,10 +18,29 @@ public class EventServiceTests
     public void CreateEvent_Succeeds()
     {
         // Arrange
+        var eventRequest = new EventDto
+        {
+            Title = "TitleString",
+            StartAt = DateTime.Parse("2026-04-10"),
+            EndAt = DateTime.Parse("2026-04-11")
+        };
+
+        var eventResult = new Event
+        {
+            Id = 1,
+            Title = "TitleString",
+            StartAt = DateTime.Parse("2026-04-10"),
+            EndAt = DateTime.Parse("2026-04-11")
+        };
+        _mockRepository.Setup(m => m.AddEvent(It.IsAny<EventDto>())).Returns(eventResult);
 
         // Act
+        var result = _service.AddEvent(eventRequest);
 
         // Assert
+        _mockRepository.Verify(r => r.AddEvent(It.IsAny<EventDto>()), Times.Once);
+
+        Assert.Equal(eventRequest.Title, result.Title);
     }
 
     // 2. получение всех событий
