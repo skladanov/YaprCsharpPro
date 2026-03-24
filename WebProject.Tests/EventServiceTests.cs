@@ -1,11 +1,9 @@
 ﻿using Moq;
-using Xunit;
-using FluentAssertions;
 
 public class EventServiceTests
 {
     private readonly Mock<IEventRepository> _mockRepository;
-    private readonly EventService _service;
+    private readonly IEventService _service;
 
     public EventServiceTests()
     {
@@ -123,7 +121,7 @@ public class EventServiceTests
         // Arrange
 
         // Act
-        
+
         // Assert
     }
     // 11. попытка обновить событие с несуществующим ID
@@ -150,30 +148,7 @@ public class EventServiceTests
 
     // 13. обновление события с некорректными датами(EndAt раньше StartAt)
     [Fact]
-    public void CreateEvent_InvalidEventData_ValidationException()
-    {
-        // Arrange
-
-        // Act
-
-        // Assert
-    }
-
-    // 14. создать событие которое уже существует(совпадения по Title, StartAt и EndAt)
-    [Fact]
-    public async Task CreateEvent_WithDuplicateTitleAndDate_ThrowsDuplicateEventException()
-    {
-        // Arrange
-
-        // Act
-
-        // Assert
-    }
-
-
-    // 14. обновить событие которое станет дубликатом существующего (совпадения по Title, StartAt и EndAt)
-    [Fact]
-    public async Task UpdateEvent_Duplicate_Title_StartAt_EndAt_ThrowsDuplicateEventException()
+    public void CreateEvent_EndAtlessStartAt_ValidationException()
     {
         // Arrange
 
