@@ -1,5 +1,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc.Diagnostics;
+using System;
+using System.Linq.Expressions;
 using System.Runtime.InteropServices;
 
 public class EventService : IEventService
@@ -11,23 +13,20 @@ public class EventService : IEventService
         _repository = repository;
     }
 
-    public PaginatedResult<Event> GetAllEvents(int page, int pageSize, string? title, DateTime? from, DateTime? to)
+    public PaginatedResult<Event> GetAllEvents(int page = 1, int pageSize = 10, string title = null, DateTime? from = null, DateTime? to = null)
     {
-        var query = _repository.GetAllEvents().AsQueryable();
+        Expression<Func<Event, bool>> predicate = e =>
+        (string.IsNullOrEmpty(title) ||
+            e.Title.Contains(title, StringComparison.OrdinalIgnoreCase)) &&
+        (!from.HasValue || e.StartAt >= from.Value) &&
+        (!to.HasValue || e.EndAt <= to.Value);
 
-        if (!string.IsNullOrEmpty(title))
-            query = query.Where(e => e.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
+        ICollection<Event> allEvents = _repository.GetAllEvents(predicate);
 
-        if (from.HasValue)
-            query = query.Where(e => e.StartAt >= from.Value);
-
-        if (to.HasValue)
-            query = query.Where(e => e.EndAt <= to.Value);
-
-        var totalCount = query.Count();
+        var totalCount = allEvents.Count;
         var offset = (page - 1) * pageSize;
 
-        var items = query
+        var items = allEvents
             .OrderBy(e => e.StartAt)
             .Skip(offset)
             .Take(pageSize)
