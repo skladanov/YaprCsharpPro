@@ -98,8 +98,8 @@ public class EventServiceTests
             StartAt = DateTime.Parse("2026-04-10"),
             EndAt = DateTime.Parse("2026-04-11")
         };
-        _mockRepository.Setup(m => m.GetEvent(It.IsAny<int>())).Returns(existsEvent);
-        _mockRepository.Setup(m => m.UpdateEvent(It.IsAny<EventDto>(), It.IsAny<int>())).Returns(true);
+        _mockRepository.Setup(m => m.GetEvent(It.Is<int>(id => id == 1))).Returns(existsEvent);
+        _mockRepository.Setup(m => m.UpdateEvent(It.IsAny<EventDto>(), It.Is<int>(id => id == 1))).Returns(true);
 
         // Act
         _service.UpdateEvent(newEventData, 1);
@@ -118,10 +118,23 @@ public class EventServiceTests
     public void DeleteExistingEvent_Succeeds()
     {
         // Arrange
+        var existsEvent = new Event
+        {
+            Id = 1,
+            Title = "TitleString",
+            StartAt = DateTime.Parse("2026-04-10"),
+            EndAt = DateTime.Parse("2026-04-11")
+        };
+        _mockRepository.Setup(m => m.GetEvent(It.Is<int>(id => id == 1))).Returns(existsEvent);
+        _mockRepository.Setup(m => m.DeleteEvent(It.IsAny<int>())).Returns(true);
 
         // Act
+        _service.DeleteEvent(1);
 
         // Assert
+        _mockRepository.Verify(m => m.DeleteEvent(
+        It.Is<int>(id => id == 1)),
+        Times.Once);
     }
 
     // 6. фильтрация по названию
