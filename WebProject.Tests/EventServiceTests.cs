@@ -48,10 +48,14 @@ public class EventServiceTests
     public void GetAllEvents_WithoutFilters_Succeeds()
     {
         // Arrange
+        _mockRepository.Setup(m => m.GetAllEvents(null, null, null)).Returns(new List<Event>());
 
         // Act
+        var result = _service.GetAllEvents();
 
         // Assert
+        _mockRepository.Verify(r => r.GetAllEvents(null, null, null), Times.Once);
+        Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
     }
 
     // 3. получение события по ID
