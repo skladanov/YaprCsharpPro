@@ -48,7 +48,32 @@ public class EventServiceTests
     public void GetAllEvents_WithoutFilters_Succeeds()
     {
         // Arrange
-        _mockRepository.Setup(m => m.GetAllEvents(null, null, null)).Returns(new List<Event>());
+        var testEvents = new List<Event>
+        {
+            new Event
+            {
+                Id = 1,
+                Title = "Event In Range",
+                StartAt = new DateTime(2026, 4, 10),
+                EndAt = new DateTime(2026, 4, 12)
+            },
+            new Event
+            {
+                Id = 2,
+                Title = "Event Before Range",
+                StartAt = new DateTime(2026, 4, 5),
+                EndAt = new DateTime(2026, 4, 6)
+            },
+            new Event
+            {
+                Id = 3,
+                Title = "Event After Range",
+                StartAt = new DateTime(2026, 4, 20),
+                EndAt = new DateTime(2026, 4, 22)
+            }
+        };
+
+        _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>())).Returns((testEvents.ToList()));
 
         // Act
         var result = _service.GetAllEvents();
@@ -142,21 +167,90 @@ public class EventServiceTests
     public void GetEvents_FilteringByTitle_Succeeds()
     {
         // Arrange
+        var testEvents = new List<Event>
+        {
+            new Event
+            {
+                Id = 1,
+                Title = "Event In Range",
+                StartAt = new DateTime(2026, 4, 10),
+                EndAt = new DateTime(2026, 4, 12)
+            },
+            new Event
+            {
+                Id = 2,
+                Title = "Event Before Range",
+                StartAt = new DateTime(2026, 4, 5),
+                EndAt = new DateTime(2026, 4, 6)
+            },
+            new Event
+            {
+                Id = 3,
+                Title = "Event After Range",
+                StartAt = new DateTime(2026, 4, 20),
+                EndAt = new DateTime(2026, 4, 22)
+            }
+        };
+        var title = "Event in";
+
+        _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>())).Returns((testEvents.Where(e =>
+            (e.Title.Contains(title, StringComparison.OrdinalIgnoreCase))).ToList()));
 
         // Act
+        var result = _service.GetAllEvents(title: title);
 
         // Assert
+        _mockRepository.Verify(r => r.GetAllEvents(title, null, null), Times.Once);
+        Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
+        Assert.Single(result.Items);
+        Assert.Contains(title, result.Items.First().Title);
     }
 
-    // 7. фильтрация по датам(startDate, endDate)
+    // 7. фильтрация по датам(startDate < endDate)
     [Fact]
     public void GetEvents_FilteringBy_StartDat_EndDate_Succeeds()
     {
         // Arrange
+        var testEvents = new List<Event>
+        {
+            new Event
+            {
+                Id = 1,
+                Title = "Event In Range",
+                StartAt = new DateTime(2026, 4, 10),
+                EndAt = new DateTime(2026, 4, 12)
+            },
+            new Event
+            {
+                Id = 2,
+                Title = "Event Before Range",
+                StartAt = new DateTime(2026, 4, 5),
+                EndAt = new DateTime(2026, 4, 6)
+            },
+            new Event
+            {
+                Id = 3,
+                Title = "Event After Range",
+                StartAt = new DateTime(2026, 4, 20),
+                EndAt = new DateTime(2026, 4, 22)
+            }
+        };
+        var startDate = new DateTime(2026, 4, 8);
+        var endDate = new DateTime(2026, 4, 15);
+
+        _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>())).Returns((testEvents.Where(e =>
+            (e.StartAt >= startDate) &&
+            (e.EndAt <= endDate))
+            .ToList()));
 
         // Act
+        var result = _service.GetAllEvents(from: startDate, to: endDate);
 
         // Assert
+        _mockRepository.Verify(r => r.GetAllEvents(null, startDate, endDate), Times.Once);
+        Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
+        Assert.Single(result.Items);
+        Assert.Equal("Event In Range", result.Items.First().Title);
     }
 
     // 8. пагинация событий
