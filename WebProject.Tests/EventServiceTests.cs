@@ -355,20 +355,53 @@ public class EventServiceTests
     public void GetEventById_nonExistentevent_ThrowsEventNotFoundException()
     {
         // Arrange
+        int id = 999;
+        _mockRepository.Setup(m => m.GetEvent(It.IsAny<int>())).Throws(new EventNotFoundException(id));
 
         // Act
+        try
+        {
+            var result = _service.GetEvent(id);
+        }
+        catch (EventNotFoundException ex)
+        {
+            // Assert
+            Assert.Throws<EventNotFoundException>(
+            () => _service.GetEvent(999));
 
-        // Assert
+            Assert.Contains("999", ex.Message);
+        }
     }
+
     // 11. попытка обновить событие с несуществующим ID
     [Fact]
     public void UpdateEventById_nonExistentevent_ThrowsEventNotFoundException()
     {
         // Arrange
+        var newEventData = new EventDto
+        {
+            Title = "UpdatedTitle",
+            StartAt = DateTime.Parse("2026-04-10"),
+            EndAt = DateTime.Parse("2026-04-11")
+        };
+
+        int id = 999;
+        _mockRepository.Setup(m => m.GetEvent(It.IsAny<int>())).Throws(new EventNotFoundException(id));
+        _mockRepository.Setup(m => m.UpdateEvent(It.IsAny<EventDto>(), It.IsAny<int>())).Returns(true);
 
         // Act
+        try
+        {
+            _service.UpdateEvent(newEventData, id);
+        }
+        catch(EventNotFoundException ex)
+        {
+            // Assert
+            Assert.Throws<EventNotFoundException>(
+            () => _service.GetEvent(999));
 
-        // Assert
+            Assert.Contains("999", ex.Message);
+        }
     }
 
     // 12. создание события с некорректными данными(если валидация в сервисе)
@@ -376,10 +409,26 @@ public class EventServiceTests
     public void CreateEvent_InvalidEventData_ValidationException()
     {
         // Arrange
+        var eventRequest = new EventDto
+        {
+            Title = ""
+        };
+
+        _mockRepository.Setup(m => m.AddEvent(It.IsAny<EventDto>())).Throws(new ValidationException());
 
         // Act
+        try
+        {
+            var result = _service.AddEvent(eventRequest);
+        }
+        catch (ValidationException ex)
+        {
+            // Assert
+            Assert.Throws<ValidationException>(
+            () => _service.AddEvent(eventRequest));
 
-        // Assert
+            Assert.Equal(3, ex.Errors.Count);
+        }
     }
 
     // 13. обновление события с некорректными датами(EndAt раньше StartAt)
@@ -387,9 +436,27 @@ public class EventServiceTests
     public void CreateEvent_EndAtlessStartAt_ValidationException()
     {
         // Arrange
+        var eventRequest = new EventDto
+        {
+            Title = "TitleString",
+            StartAt = DateTime.Parse("2026-04-11"),
+            EndAt = DateTime.Parse("2026-04-10")
+        };
+
+        _mockRepository.Setup(m => m.AddEvent(It.IsAny<EventDto>())).Throws(new ValidationException());
 
         // Act
+        try
+        {
+            var result = _service.AddEvent(eventRequest);
+        }
+        catch (ValidationException ex)
+        {
+            // Assert
+            Assert.Throws<ValidationException>(
+            () => _service.AddEvent(eventRequest));
 
-        // Assert
+            Assert.Contains("Failed data validation", ex.Message);
+        }
     }
 }

@@ -1,5 +1,8 @@
 public class EventNotFoundException : BusinessException
 {
+    public EventNotFoundException()
+        : base("Event not found") { }
+
     public EventNotFoundException(int eventId)
-        : base($"Enent with ID {eventId} not found") { }
+        : base($"Event with ID {eventId} not found") { }
 }

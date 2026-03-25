@@ -1,5 +1,7 @@
 public class ValidationException : BusinessException
 {
+    public ValidationException()
+        : base("Failed data validation") { }
     public ValidationException(IDictionary<string, string[]> errors)
         : base("Failed data validation")
     {
