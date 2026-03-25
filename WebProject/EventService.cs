@@ -15,7 +15,16 @@ public class EventService : IEventService
 
     public PaginatedResult<Event> GetAllEvents(int page = 1, int pageSize = 10, string? title = null, DateTime? from = null, DateTime? to = null)
     {
+        if (string.IsNullOrEmpty(title)) {title = string.Empty;}
+        if (from == null) {from = DateTime.MinValue;}
+        if (to == null) {to = DateTime.MaxValue;}
+
         ICollection<Event> allEvents = _repository.GetAllEvents(title, from, to);
+
+        if (allEvents == null)
+        {
+            allEvents = new List<Event>();
+        }
 
         var totalCount = allEvents.Count;
         var offset = (page - 1) * pageSize;

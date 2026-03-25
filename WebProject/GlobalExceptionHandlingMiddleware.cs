@@ -57,7 +57,6 @@ public class GlobalExceptionHandlingMiddleware
         => ex switch
         {
             ValidationException ve => StatusCodes.Status400BadRequest,
-            DuplicateEventException dee => StatusCodes.Status409Conflict,
             EventNotFoundException enfe => StatusCodes.Status400BadRequest,
             _ => StatusCodes.Status500InternalServerError
         };

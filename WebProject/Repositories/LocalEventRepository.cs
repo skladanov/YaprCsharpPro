@@ -16,8 +16,7 @@ public class LocalEventRepository : IEventRepository
     {
         return _events
         .Where(e =>
-            (string.IsNullOrEmpty(title) ||
-                e.Title.Contains(title, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(title) || e.Title.Contains(title, StringComparison.OrdinalIgnoreCase)) &&
             (!from.HasValue || e.StartAt >= from.Value) &&
             (!to.HasValue || e.EndAt <= to.Value))
         .ToList();
