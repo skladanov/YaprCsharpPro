@@ -51,4 +51,5 @@ API предоставляет CRUD‑операции для работы с с
 
 3. Запустите тесты:
    ```bash
-   dotnet tests
+   cd YaprCsharpPro/WebProject.Tests
+   dotnet test
