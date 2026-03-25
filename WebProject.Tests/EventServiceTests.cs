@@ -241,7 +241,7 @@ public class EventServiceTests
         _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>())).Returns((testEvents.Where(e =>
             (e.StartAt >= startDate) &&
             (e.EndAt <= endDate))
-            .ToList()));
+        .ToList()));
 
         // Act
         var result = _service.GetAllEvents(from: startDate, to: endDate);
@@ -301,10 +301,51 @@ public class EventServiceTests
     public void GetEvents_FilteringByAllParams_Succeeds()
     {
         // Arrange
+        var testEvents = new List<Event>
+        {
+            new Event
+            {
+                Id = 1,
+                Title = "Event In Range",
+                StartAt = new DateTime(2026, 4, 10),
+                EndAt = new DateTime(2026, 4, 12)
+            },
+            new Event
+            {
+                Id = 2,
+                Title = "Event Before Range",
+                StartAt = new DateTime(2026, 4, 5),
+                EndAt = new DateTime(2026, 4, 6)
+            },
+            new Event
+            {
+                Id = 3,
+                Title = "Event After Range",
+                StartAt = new DateTime(2026, 4, 20),
+                EndAt = new DateTime(2026, 4, 22)
+            }
+        };
+
+        var startDate = new DateTime(2026, 4, 8);
+        var endDate = new DateTime(2026, 4, 15);
+        var title = "Event In";
+
+        _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>())).Returns((testEvents.Where(e =>
+            (e.Title.Contains(title, StringComparison.OrdinalIgnoreCase)) &&
+            (e.StartAt >= startDate) &&
+            (e.EndAt <= endDate))
+        .ToList()));
 
         // Act
+        var result = _service.GetAllEvents(page: 1, pageSize: 2, title: title, from: startDate, to: endDate);
 
         // Assert
+        _mockRepository.Verify(r => r.GetAllEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()), Times.Once);
+        Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
+        Assert.Single(result.Items);
+        Assert.Contains(title, result.Items.First().Title);
+        Assert.Equal(1, result.TotalPages);
+        Assert.False(result.HasNextPage);
     }
 
     // Неуспешные сценарии:
