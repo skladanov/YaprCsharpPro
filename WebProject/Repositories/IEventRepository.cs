@@ -2,7 +2,7 @@ using System.Linq.Expressions;
 
 public interface IEventRepository
 {
-    ICollection<Event> GetAllEvents(string? title, DateTime? from, DateTime? to);
+    ICollection<Event> GetAllEvents(Expression<Func<Event, bool>> predicate);
     Event? GetEvent(int id);
     Event AddEvent(EventDto newEventData);
     bool UpdateEvent(EventDto newEventData, int id);
