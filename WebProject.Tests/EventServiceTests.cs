@@ -1,4 +1,5 @@
 ﻿using Moq;
+using System.Linq.Expressions;
 
 public class EventServiceTests
 {
@@ -73,14 +74,15 @@ public class EventServiceTests
             }
         };
 
-        _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>())).Returns((testEvents.ToList()));
+        _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>())).Returns((testEvents.ToList()));
 
         // Act
         var result = _service.GetAllEvents();
 
         // Assert
-        _mockRepository.Verify(r => r.GetAllEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()), Times.Once);
+        _mockRepository.Verify(r => r.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
         Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
+        Assert.Equal(3, result.TotalCount);
     }
 
     // 3. получение события по ID
@@ -191,16 +193,23 @@ public class EventServiceTests
                 EndAt = new DateTime(2026, 4, 22)
             }
         };
-        var title = "Event In";
+        string title = "Event In";
+        DateTime? from = null;
+        DateTime? to = null;
 
-        _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>())).Returns((testEvents.Where(e =>
-            (e.Title.Contains(title, StringComparison.OrdinalIgnoreCase))).ToList()));
+        Expression<Func<Event, bool>> predicate = e =>
+        (string.IsNullOrEmpty(title) ||
+            e.Title.Contains(title, StringComparison.OrdinalIgnoreCase)) &&
+        (!from.HasValue || e.StartAt >= from.Value) &&
+        (!to.HasValue || e.EndAt <= to.Value);
+
+        _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>())).Returns((testEvents.AsQueryable().Where(predicate).ToList()));
 
         // Act
         var result = _service.GetAllEvents(title: title);
 
         // Assert
-        _mockRepository.Verify(r => r.GetAllEvents(title, It.IsAny<DateTime>(), It.IsAny<DateTime>()), Times.Once);
+        _mockRepository.Verify(r => r.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
         Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
         Assert.Single(result.Items);
         Assert.Contains(title, result.Items.First().Title);
@@ -235,19 +244,25 @@ public class EventServiceTests
                 EndAt = new DateTime(2026, 4, 22)
             }
         };
-        var startDate = new DateTime(2026, 4, 8);
-        var endDate = new DateTime(2026, 4, 15);
 
-        _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>())).Returns((testEvents.Where(e =>
-            (e.StartAt >= startDate) &&
-            (e.EndAt <= endDate))
-        .ToList()));
+        string title = "Event In";
+        DateTime? from = new DateTime(2026, 4, 8);
+        DateTime? to = new DateTime(2026, 4, 15);
+
+        Expression<Func<Event, bool>> predicate = e =>
+        (string.IsNullOrEmpty(title) ||
+            e.Title.Contains(title, StringComparison.OrdinalIgnoreCase)) &&
+        (!from.HasValue || e.StartAt >= from.Value) &&
+        (!to.HasValue || e.EndAt <= to.Value);
+
+        _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>())).Returns((testEvents.AsQueryable().Where(predicate).ToList()));
+
 
         // Act
-        var result = _service.GetAllEvents(from: startDate, to: endDate);
+        var result = _service.GetAllEvents(from: from, to: to);
 
         // Assert
-        _mockRepository.Verify(r => r.GetAllEvents(It.IsAny<string>(), startDate, endDate), Times.Once);
+        _mockRepository.Verify(r => r.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
         Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
         Assert.Single(result.Items);
         Assert.Equal("Event In Range", result.Items.First().Title);
@@ -283,13 +298,23 @@ public class EventServiceTests
             }
         };
 
-        _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>())).Returns((testEvents.ToList()));
+        string? title = null;
+        DateTime? from = null;
+        DateTime? to = null;
+
+        Expression<Func<Event, bool>> predicate = e =>
+        (string.IsNullOrEmpty(title) ||
+            e.Title.Contains(title, StringComparison.OrdinalIgnoreCase)) &&
+        (!from.HasValue || e.StartAt >= from.Value) &&
+        (!to.HasValue || e.EndAt <= to.Value);
+
+        _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>())).Returns((testEvents.AsQueryable().Where(predicate).ToList()));
 
         // Act
         var result = _service.GetAllEvents(page: 2, pageSize: 2);
 
         // Assert
-        _mockRepository.Verify(r => r.GetAllEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()), Times.Once);
+        _mockRepository.Verify(r => r.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
         Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
         Assert.Single(result.Items);
         Assert.Equal(2, result.TotalPages);
@@ -326,21 +351,23 @@ public class EventServiceTests
             }
         };
 
-        var startDate = new DateTime(2026, 4, 8);
-        var endDate = new DateTime(2026, 4, 15);
-        var title = "Event In";
+        string title = "Event In";
+        DateTime? from = new DateTime(2026, 4, 8);
+        DateTime? to = new DateTime(2026, 4, 15);
 
-        _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>())).Returns((testEvents.Where(e =>
-            (e.Title.Contains(title, StringComparison.OrdinalIgnoreCase)) &&
-            (e.StartAt >= startDate) &&
-            (e.EndAt <= endDate))
-        .ToList()));
+        Expression<Func<Event, bool>> predicate = e =>
+        (string.IsNullOrEmpty(title) ||
+            e.Title.Contains(title, StringComparison.OrdinalIgnoreCase)) &&
+        (!from.HasValue || e.StartAt >= from.Value) &&
+        (!to.HasValue || e.EndAt <= to.Value);
+
+        _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>())).Returns((testEvents.AsQueryable().Where(predicate).ToList()));
 
         // Act
-        var result = _service.GetAllEvents(page: 1, pageSize: 2, title: title, from: startDate, to: endDate);
+        var result = _service.GetAllEvents(page: 1, pageSize: 2, title: title, from: from, to: to);
 
         // Assert
-        _mockRepository.Verify(r => r.GetAllEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()), Times.Once);
+        _mockRepository.Verify(r => r.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
         Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
         Assert.Single(result.Items);
         Assert.Contains(title, result.Items.First().Title);
@@ -356,21 +383,15 @@ public class EventServiceTests
     {
         // Arrange
         int id = 999;
-        _mockRepository.Setup(m => m.GetEvent(It.IsAny<int>())).Throws(new EventNotFoundException(id));
+        _mockRepository.Setup(m => m.GetEvent(It.IsAny<int>())).Returns((Event)null);
 
-        // Act
-        try
-        {
-            var result = _service.GetEvent(id);
-        }
-        catch (EventNotFoundException ex)
-        {
-            // Assert
-            Assert.Throws<EventNotFoundException>(
-            () => _service.GetEvent(999));
+        // Assert
+        var ex = Assert.Throws<EventNotFoundException>(
+        () => _service.GetEvent(999));
 
-            Assert.Contains("999", ex.Message);
-        }
+        Assert.Contains("999", ex.Message);
+
+        _mockRepository.Verify(m => m.GetEvent(id), Times.Once);
     }
 
     // 11. попытка обновить событие с несуществующим ID
@@ -386,22 +407,16 @@ public class EventServiceTests
         };
 
         int id = 999;
-        _mockRepository.Setup(m => m.GetEvent(It.IsAny<int>())).Throws(new EventNotFoundException(id));
+        _mockRepository.Setup(m => m.GetEvent(It.IsAny<int>())).Returns((Event)null);
         _mockRepository.Setup(m => m.UpdateEvent(It.IsAny<EventDto>(), It.IsAny<int>())).Returns(true);
 
-        // Act
-        try
-        {
-            _service.UpdateEvent(newEventData, id);
-        }
-        catch(EventNotFoundException ex)
-        {
-            // Assert
-            Assert.Throws<EventNotFoundException>(
-            () => _service.GetEvent(999));
+        // Assert
+        var ex = Assert.Throws<EventNotFoundException>(
+        () => _service.GetEvent(999));
 
-            Assert.Contains("999", ex.Message);
-        }
+        Assert.Contains("999", ex.Message);
+
+        _mockRepository.Verify(m => m.UpdateEvent(newEventData, id), Times.Never);
     }
 
     // 12. создание события с некорректными данными(если валидация в сервисе)
@@ -414,21 +429,15 @@ public class EventServiceTests
             Title = ""
         };
 
-        _mockRepository.Setup(m => m.AddEvent(It.IsAny<EventDto>())).Throws(new ValidationException());
+        _mockRepository.Setup(m => m.AddEvent(It.IsAny<EventDto>())).Returns((Event)null);
 
-        // Act
-        try
-        {
-            var result = _service.AddEvent(eventRequest);
-        }
-        catch (ValidationException ex)
-        {
-            // Assert
-            Assert.Throws<ValidationException>(
-            () => _service.AddEvent(eventRequest));
+        // Assert
+        var ex = Assert.Throws<ValidationException>(
+        () => _service.AddEvent(eventRequest));
 
-            Assert.Equal(3, ex.Errors.Count);
-        }
+        Assert.Equal(3, ex.Errors.Count);
+
+        _mockRepository.Verify(m => m.AddEvent(eventRequest), Times.Never);
     }
 
     // 13. обновление события с некорректными датами(EndAt раньше StartAt)
@@ -443,20 +452,14 @@ public class EventServiceTests
             EndAt = DateTime.Parse("2026-04-10")
         };
 
-        _mockRepository.Setup(m => m.AddEvent(It.IsAny<EventDto>())).Throws(new ValidationException());
+        _mockRepository.Setup(m => m.AddEvent(It.IsAny<EventDto>())).Returns((Event)null);
 
-        // Act
-        try
-        {
-            var result = _service.AddEvent(eventRequest);
-        }
-        catch (ValidationException ex)
-        {
-            // Assert
-            Assert.Throws<ValidationException>(
-            () => _service.AddEvent(eventRequest));
+        // Assert
+        var ex = Assert.Throws<ValidationException>(
+        () => _service.AddEvent(eventRequest));
 
-            Assert.Contains("Failed data validation", ex.Message);
-        }
+        Assert.Contains("Failed data validation", ex.Message);
+
+        _mockRepository.Verify(m => m.AddEvent(eventRequest), Times.Never);
     }
 }
