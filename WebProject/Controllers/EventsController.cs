@@ -7,9 +7,18 @@ using System.ComponentModel.DataAnnotations;
 public class EventsController : ControllerBase
 {
     private readonly IEventService _eventService;
-    public EventsController(IEventService eventService)
+    private readonly IBookingService _bookingService;
+    public EventsController(IEventService eventService, IBookingService bookingService)
     {
         _eventService = eventService;
+        _bookingService = bookingService;
+    }
+
+    [HttpGet("{id:int}/book")]
+    public IActionResult CreateBooking(int id)
+    {
+        _bookingService.CreateBookingAsync(id);
+        return Accepted();
     }
 
     [HttpGet]
