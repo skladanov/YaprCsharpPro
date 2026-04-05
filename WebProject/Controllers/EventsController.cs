@@ -19,36 +19,42 @@ public class EventsController : ControllerBase
     {
         var result = await _bookingService.CreateBookingAsync(id);
 
-        var value = new {
-            message = "Бронирование находится в обработке",
-            bookingId = result,
-            statusCheckUrl = Url.Action("GetBooking", "Bookings", new { id = result })
-        };
+        //var value = new {
+        //    message = "Бронирование находится в обработке",
+        //    bookingId = result,
+        //    statusCheckUrl = Url.Action("GetBooking", "Bookings", new { id = result })
+        //};
 
-        return AcceptedAtRoute(result, value);
+        return AcceptedAtRoute(
+            nameof(BookingsController.GetBooking),
+            new { id = result },
+            result
+        );
     }
 
     [HttpGet]
-    public ActionResult<ICollection<Event>> GetAllEvents(
+    public async Task<ActionResult<ICollection<Event>>> GetAllEvents(
         [FromQuery] string? title = null, 
         [FromQuery] DateTime? from = null,
         [FromQuery] DateTime? to = null,
         [FromQuery, Range(1, int.MaxValue)] int page = 1,
         [FromQuery, Range(1, int.MaxValue)] int pageSize = 10)
     {
-        return Ok(_eventService.GetAllEvents(page, pageSize, title, from, to));
+        var result = await _eventService.GetAllEvents(page, pageSize, title, from, to);
+        return Ok(result);
     }
 
     [HttpGet("{id:Guid}")]
-    public ActionResult<Event> GetEvent(Guid id)
+    public async Task<ActionResult<Event>> GetEvent(Guid id)
     {
-        return Ok(_eventService.GetEvent(id));
+        var result = await _eventService.GetEvent(id);
+        return Ok(result);
     }
 
     [HttpPost]
-    public ActionResult<Event> AddEvent([FromBody] EventDto newEventData)
+    public async Task<ActionResult<Event>> AddEvent([FromBody] EventDto newEventData)
     {
-        var createdEvent = _eventService.AddEvent(newEventData);
+        var createdEvent = await _eventService.AddEvent(newEventData);
 
         return CreatedAtAction(
             nameof(GetEvent),
@@ -58,17 +64,17 @@ public class EventsController : ControllerBase
     }
 
     [HttpPut("{id:Guid}")]
-    public IActionResult UpdateEvent([FromBody] EventDto newEventData, Guid id)
+    public async Task<IActionResult> UpdateEvent([FromBody] EventDto newEventData, Guid id)
     {
-        _eventService.UpdateEvent(newEventData, id);
+        await _eventService.UpdateEvent(newEventData, id);
 
         return NoContent();
     }
 
     [HttpDelete("{id:Guid}")]
-    public IActionResult Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id)
     {
-        _eventService.DeleteEvent(id);
+        await _eventService.DeleteEvent(id);
 
         return Ok(new { message = $"Event with ID {id} successfully deleted" });
     }
