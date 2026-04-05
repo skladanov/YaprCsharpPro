@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 public class Event
 {
     [Required]
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     [Required]
     public required string Title { get; set; }
     public string Description { get; set; } = string.Empty;

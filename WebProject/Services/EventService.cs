@@ -46,7 +46,7 @@ public class EventService : IEventService
         };
     }
 
-    public Event? GetEvent(int id)
+    public Event? GetEvent(Guid id)
     {
         var existingEvent = _repository.GetEvent(id);
 
@@ -68,7 +68,7 @@ public class EventService : IEventService
         return createdEvent;
     }
 
-    public void UpdateEvent(EventDto newEventData, int id)
+    public void UpdateEvent(EventDto newEventData, Guid id)
     {
         ValidateRequestEvent(newEventData);
 
@@ -79,7 +79,7 @@ public class EventService : IEventService
             throw new ExternalException("Failed to update event");
     }
 
-    public void DeleteEvent(int id)
+    public void DeleteEvent(Guid id)
     {
         if (GetEvent(id) == null)
             throw new EventNotFoundException(id);

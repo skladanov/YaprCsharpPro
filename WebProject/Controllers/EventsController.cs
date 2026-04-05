@@ -14,8 +14,8 @@ public class EventsController : ControllerBase
         _bookingService = bookingService;
     }
 
-    [HttpPost("{id:int}/book")]
-    public async Task<IActionResult> CreateBooking(int id)
+    [HttpPost("{id:Guid}/book")]
+    public async Task<IActionResult> CreateBooking(Guid id)
     {
         var result = await _bookingService.CreateBookingAsync(id);
 
@@ -39,8 +39,8 @@ public class EventsController : ControllerBase
         return Ok(_eventService.GetAllEvents(page, pageSize, title, from, to));
     }
 
-    [HttpGet("{id:int}")]
-    public ActionResult<Event> GetEvent(int id)
+    [HttpGet("{id:Guid}")]
+    public ActionResult<Event> GetEvent(Guid id)
     {
         return Ok(_eventService.GetEvent(id));
     }
@@ -57,16 +57,16 @@ public class EventsController : ControllerBase
         );
     }
 
-    [HttpPut("{id:int}")]
-    public IActionResult UpdateEvent([FromBody] EventDto newEventData, int id)
+    [HttpPut("{id:Guid}")]
+    public IActionResult UpdateEvent([FromBody] EventDto newEventData, Guid id)
     {
         _eventService.UpdateEvent(newEventData, id);
 
         return NoContent();
     }
 
-    [HttpDelete("{id:int}")]
-    public IActionResult Delete(int id)
+    [HttpDelete("{id:Guid}")]
+    public IActionResult Delete(Guid id)
     {
         _eventService.DeleteEvent(id);
 

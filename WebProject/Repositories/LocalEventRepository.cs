@@ -17,7 +17,7 @@ public class LocalEventRepository : IEventRepository
         return _events.AsQueryable().Where(predicate).ToList();
     }
 
-    public Event? GetEvent(int id)
+    public Event? GetEvent(Guid id)
     {
         return _events.Where(e => e.Id == id).FirstOrDefault();
     }
@@ -25,7 +25,7 @@ public class LocalEventRepository : IEventRepository
     public Event AddEvent(EventDto eventDto)
     {
         Event newEventItem = new Event{
-            Id = _nextId++,
+            Id = Guid.NewGuid(),
             Title = eventDto.Title,
             Description = eventDto.Description,
             StartAt = eventDto.StartAt,
@@ -36,7 +36,7 @@ public class LocalEventRepository : IEventRepository
         return newEventItem;
     }
 
-    public bool UpdateEvent(EventDto newEventData, int id)
+    public bool UpdateEvent(EventDto newEventData, Guid id)
     {
         var existingEvent = GetEvent(id);
         if (existingEvent == null)
@@ -47,7 +47,7 @@ public class LocalEventRepository : IEventRepository
         return true;
     }
 
-    public bool DeleteEvent(int id)
+    public bool DeleteEvent(Guid id)
     {
         var existingEvent = GetEvent(id);
 

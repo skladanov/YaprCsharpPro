@@ -3,8 +3,8 @@ using System.Linq.Expressions;
 public interface IEventRepository
 {
     ICollection<Event> GetAllEvents(Expression<Func<Event, bool>> predicate);
-    Event? GetEvent(int id);
+    Event? GetEvent(Guid id);
     Event AddEvent(EventDto newEventData);
-    bool UpdateEvent(EventDto newEventData, int id);
-    bool DeleteEvent(int id);
+    bool UpdateEvent(EventDto newEventData, Guid id);
+    bool DeleteEvent(Guid id);
 }

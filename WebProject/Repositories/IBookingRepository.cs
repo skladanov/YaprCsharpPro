@@ -1,5 +1,5 @@
 public interface IBookingRepository
 {
-    Task<int> CreateBookingAsync(int eventId);
-    Task<Booking?> GetBookingByIdAsync(int bookingId);
+    Task<Guid> CreateBookingAsync(Guid eventId);
+    Task<Booking?> GetBookingByIdAsync(Guid bookingId);
 }

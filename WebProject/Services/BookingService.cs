@@ -8,12 +8,12 @@ public class BookingService : IBookingService
         _bookingRepositiry = bookingRepositiry; 
     }
 
-    public async Task<int> CreateBookingAsync(int eventId)
+    public async Task<Guid> CreateBookingAsync(Guid eventId)
     {
         return await _bookingRepositiry.CreateBookingAsync(eventId);
     }
 
-    public async Task<Booking?> GetBookingByIdAsync(int bookingId)
+    public async Task<Booking?> GetBookingByIdAsync(Guid bookingId)
     {
         return await _bookingRepositiry.GetBookingByIdAsync(bookingId);
     }
