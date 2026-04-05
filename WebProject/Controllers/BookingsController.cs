@@ -10,9 +10,10 @@ public class BookingsController : ControllerBase
         _bookingService = bookingService;
     }
 
-    [HttpGet("{id:int}")]
-    public ActionResult<Booking> GetBooking(int id)
+    [HttpGet("{id:int}", Name = "GetBooking")]
+    public async Task<ActionResult<Booking>> GetBooking(int id)
     {
-        return Ok(Task.FromResult(_bookingService.GetBookingByIdAsync(id)));
+        var result = await _bookingService.GetBookingByIdAsync(id);
+        return Ok(result);
     }
 }
