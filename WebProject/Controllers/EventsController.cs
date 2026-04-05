@@ -14,11 +14,18 @@ public class EventsController : ControllerBase
         _bookingService = bookingService;
     }
 
-    [HttpGet("{id:int}/book")]
-    public IActionResult CreateBooking(int id)
+    [HttpPost("{id:int}/book")]
+    public async Task<IActionResult> CreateBooking(int id)
     {
-        _bookingService.CreateBookingAsync(id);
-        return Accepted();
+        var result = await _bookingService.CreateBookingAsync(id);
+
+        var value = new {
+            message = "Бронирование находится в обработке",
+            bookingId = result,
+            statusCheckUrl = Url.Action("GetBooking", "Bookings", new { id = result })
+        };
+
+        return AcceptedAtRoute(result, value);
     }
 
     [HttpGet]
