@@ -13,13 +13,13 @@ public class LocalBookingRepository : IBookingRepository
         };
 
         _bookings.Add(booking);
-        return await Task.FromResult(booking.Id);
+        return booking.Id;
     }
 
     public async Task<Booking?> GetBookingByIdAsync(Guid bookingId)
     {
         var booking = _bookings.FirstOrDefault(b => b.Id == bookingId);
-        return await Task.FromResult(booking);
+        return booking;
     }
 
     public async Task<List<Booking>?> GetPendingBookings()

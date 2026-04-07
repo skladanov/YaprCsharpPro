@@ -13,9 +13,17 @@ public class BookingProcessService : BackgroundService
         {
             try
             {
+                await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+
                 var pendingBookings = await _bookingRepository.GetPendingBookings();
-                if (pendingBookings != null)
-                    pendingBookings.ForEach(b => b.Status = Booking.BookingStatus.Confirmed);
+                if (pendingBookings?.Any() == true)
+                {
+                    pendingBookings.ForEach(booking =>
+                    {
+                        booking.Status = Booking.BookingStatus.Confirmed;
+                        booking.ProcessedAt = DateTime.Now;
+                    });
+                }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -25,9 +33,6 @@ public class BookingProcessService : BackgroundService
             {
 
             }
-
-            await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
         }
-
     }
 }
