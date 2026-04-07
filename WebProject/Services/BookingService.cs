@@ -22,6 +22,9 @@ public class BookingService : IBookingService
 
     public async Task<Booking?> GetBookingByIdAsync(Guid bookingId)
     {
-        return await _bookingRepositiry.GetBookingByIdAsync(bookingId);
+        var booking = await _bookingRepositiry.GetBookingByIdAsync(bookingId);
+        if (booking == null)
+            throw new BookingNotFoundException(bookingId);
+        return booking;
     }
 }
