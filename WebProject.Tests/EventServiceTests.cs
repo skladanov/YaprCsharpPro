@@ -16,7 +16,7 @@ public class EventServiceTests
 
     // 1. создание события
     [Fact]
-    public void CreateEvent_Succeeds()
+    public async void CreateEvent_Succeeds()
     {
         // Arrange
         var eventRequest = new EventDto
@@ -28,79 +28,79 @@ public class EventServiceTests
 
         var eventResult = new Event
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             Title = "TitleString",
             StartAt = DateTime.Parse("2026-04-10"),
             EndAt = DateTime.Parse("2026-04-11")
         };
-        _mockRepository.Setup(m => m.AddEvent(It.IsAny<EventDto>())).Returns(eventResult);
+        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<EventDto>())).ReturnsAsync(eventResult);
 
         // Act
-        var result = _service.AddEvent(eventRequest);
+        var result = await _service.AddEventAsync(eventRequest);
 
         // Assert
-        _mockRepository.Verify(r => r.AddEvent(It.IsAny<EventDto>()), Times.Once);
+        _mockRepository.Verify(r => r.AddEventAsync(It.IsAny<EventDto>()), Times.Once);
 
         Assert.Equal(eventRequest.Title, result.Title);
     }
 
     // 2. получение всех событий
     [Fact]
-    public void GetAllEvents_WithoutFilters_Succeeds()
+    public async void GetAllEvents_WithoutFilters_Succeeds()
     {
         // Arrange
         var testEvents = new List<Event>
         {
             new Event
             {
-                Id = 1,
+                Id = Guid.NewGuid(),
                 Title = "Event In Range",
                 StartAt = new DateTime(2026, 4, 10),
                 EndAt = new DateTime(2026, 4, 12)
             },
             new Event
             {
-                Id = 2,
+                Id = Guid.NewGuid(),
                 Title = "Event Before Range",
                 StartAt = new DateTime(2026, 4, 5),
                 EndAt = new DateTime(2026, 4, 6)
             },
             new Event
             {
-                Id = 3,
+                Id = Guid.NewGuid(),
                 Title = "Event After Range",
                 StartAt = new DateTime(2026, 4, 20),
                 EndAt = new DateTime(2026, 4, 22)
             }
         };
 
-        _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>())).Returns((testEvents.ToList()));
+        _mockRepository.Setup(m => m.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>())).ReturnsAsync((testEvents.ToList()));
 
         // Act
-        var result = _service.GetAllEvents();
+        var result = await _service.GetAllEventsAsync();
 
         // Assert
-        _mockRepository.Verify(r => r.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
+        _mockRepository.Verify(r => r.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
         Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
         Assert.Equal(3, result.TotalCount);
     }
 
     // 3. получение события по ID
     [Fact]
-    public void GetEventById_Succeeds()
+    public async void GetEventById_Succeeds()
     {
         // Arrange
         var eventResult = new Event
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             Title = "TitleString",
             StartAt = DateTime.Parse("2026-04-10"),
             EndAt = DateTime.Parse("2026-04-11")
         };
-        _mockRepository.Setup(m => m.GetEvent(It.IsAny<int>())).Returns(eventResult);
+        _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>())).ReturnsAsync(eventResult);
 
         // Act
-        var result = _service.GetEvent(1);
+        var result = await _service.GetEventAsync(eventResult.Id);
 
         // Assert
         Assert.IsAssignableFrom<Event>(result);
@@ -109,12 +109,12 @@ public class EventServiceTests
 
     // 4. обновление существующего события
     [Fact]
-    public void UpdateExistingEvent_Succeeds()
+    public async void UpdateExistingEvent_Succeeds()
     {
         // Arrange
         var existsEvent = new Event
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             Title = "TitleString",
             StartAt = DateTime.Parse("2026-04-10"),
             EndAt = DateTime.Parse("2026-04-11")
@@ -125,69 +125,69 @@ public class EventServiceTests
             StartAt = DateTime.Parse("2026-04-10"),
             EndAt = DateTime.Parse("2026-04-11")
         };
-        _mockRepository.Setup(m => m.GetEvent(It.Is<int>(id => id == 1))).Returns(existsEvent);
-        _mockRepository.Setup(m => m.UpdateEvent(It.IsAny<EventDto>(), It.Is<int>(id => id == 1))).Returns(true);
+        _mockRepository.Setup(m => m.GetEventAsync(It.Is<Guid>(id => id == existsEvent.Id))).ReturnsAsync(existsEvent);
+        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<EventDto>(), It.Is<Guid>(id => id == existsEvent.Id))).ReturnsAsync(true);
 
         // Act
-        _service.UpdateEvent(newEventData, 1);
+        await _service.UpdateEventAsync(newEventData, existsEvent.Id);
 
         // Assert
-        _mockRepository.Verify(m => m.UpdateEvent(It.Is<EventDto>(dto =>
+        _mockRepository.Verify(m => m.UpdateEventAsync(It.Is<EventDto>(dto =>
             dto.Title == "UpdatedTitle" &&
             dto.StartAt == DateTime.Parse("2026-04-10") &&
             dto.EndAt == DateTime.Parse("2026-04-11")),
-        It.Is<int>(id => id == 1)),
+        It.Is<Guid>(id => id == existsEvent.Id)),
         Times.Once);
     }
 
     // 5. удаление существующего события
     [Fact]
-    public void DeleteExistingEvent_Succeeds()
+    public async void DeleteExistingEvent_Succeeds()
     {
         // Arrange
         var existsEvent = new Event
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             Title = "TitleString",
             StartAt = DateTime.Parse("2026-04-10"),
             EndAt = DateTime.Parse("2026-04-11")
         };
-        _mockRepository.Setup(m => m.GetEvent(It.Is<int>(id => id == 1))).Returns(existsEvent);
-        _mockRepository.Setup(m => m.DeleteEvent(It.IsAny<int>())).Returns(true);
+        _mockRepository.Setup(m => m.GetEventAsync(It.Is<Guid>(id => id == existsEvent.Id))).ReturnsAsync(existsEvent);
+        _mockRepository.Setup(m => m.DeleteEventAsync(It.IsAny<Guid>())).ReturnsAsync(true);
 
         // Act
-        _service.DeleteEvent(1);
+        await _service.DeleteEventAsync(existsEvent.Id);
 
         // Assert
-        _mockRepository.Verify(m => m.DeleteEvent(
-        It.Is<int>(id => id == 1)),
+        _mockRepository.Verify(m => m.DeleteEventAsync(
+        It.Is<Guid>(id => id == existsEvent.Id)),
         Times.Once);
     }
 
     // 6. фильтрация по названию
     [Fact]
-    public void GetEvents_FilteringByTitle_Succeeds()
+    public async void GetEvents_FilteringByTitle_Succeeds()
     {
         // Arrange
         var testEvents = new List<Event>
         {
             new Event
             {
-                Id = 1,
+                Id = Guid.NewGuid(),
                 Title = "Event In Range",
                 StartAt = new DateTime(2026, 4, 10),
                 EndAt = new DateTime(2026, 4, 12)
             },
             new Event
             {
-                Id = 2,
+                Id = Guid.NewGuid(),
                 Title = "Event Before Range",
                 StartAt = new DateTime(2026, 4, 5),
                 EndAt = new DateTime(2026, 4, 6)
             },
             new Event
             {
-                Id = 3,
+                Id = Guid.NewGuid(),
                 Title = "Event After Range",
                 StartAt = new DateTime(2026, 4, 20),
                 EndAt = new DateTime(2026, 4, 22)
@@ -203,13 +203,13 @@ public class EventServiceTests
         (!from.HasValue || e.StartAt >= from.Value) &&
         (!to.HasValue || e.EndAt <= to.Value);
 
-        _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>())).Returns((testEvents.AsQueryable().Where(predicate).ToList()));
+        _mockRepository.Setup(m => m.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>())).ReturnsAsync((testEvents.AsQueryable().Where(predicate).ToList()));
 
         // Act
-        var result = _service.GetAllEvents(title: title);
+        var result = await _service.GetAllEventsAsync(title: title);
 
         // Assert
-        _mockRepository.Verify(r => r.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
+        _mockRepository.Verify(r => r.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
         Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
         Assert.Single(result.Items);
         Assert.Contains(title, result.Items.First().Title);
@@ -217,28 +217,28 @@ public class EventServiceTests
 
     // 7. фильтрация по датам(startDate < endDate)
     [Fact]
-    public void GetEvents_FilteringBy_StartDat_EndDate_Succeeds()
+    public async void GetEvents_FilteringBy_StartDat_EndDate_Succeeds()
     {
         // Arrange
         var testEvents = new List<Event>
         {
             new Event
             {
-                Id = 1,
+                Id = Guid.NewGuid(),
                 Title = "Event In Range",
                 StartAt = new DateTime(2026, 4, 10),
                 EndAt = new DateTime(2026, 4, 12)
             },
             new Event
             {
-                Id = 2,
+                Id = Guid.NewGuid(),
                 Title = "Event Before Range",
                 StartAt = new DateTime(2026, 4, 5),
                 EndAt = new DateTime(2026, 4, 6)
             },
             new Event
             {
-                Id = 3,
+                Id = Guid.NewGuid(),
                 Title = "Event After Range",
                 StartAt = new DateTime(2026, 4, 20),
                 EndAt = new DateTime(2026, 4, 22)
@@ -255,14 +255,14 @@ public class EventServiceTests
         (!from.HasValue || e.StartAt >= from.Value) &&
         (!to.HasValue || e.EndAt <= to.Value);
 
-        _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>())).Returns((testEvents.AsQueryable().Where(predicate).ToList()));
+        _mockRepository.Setup(m => m.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>())).ReturnsAsync((testEvents.AsQueryable().Where(predicate).ToList()));
 
 
         // Act
-        var result = _service.GetAllEvents(from: from, to: to);
+        var result = await _service.GetAllEventsAsync(from: from, to: to);
 
         // Assert
-        _mockRepository.Verify(r => r.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
+        _mockRepository.Verify(r => r.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
         Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
         Assert.Single(result.Items);
         Assert.Equal("Event In Range", result.Items.First().Title);
@@ -270,28 +270,28 @@ public class EventServiceTests
 
     // 8. пагинация событий
     [Fact]
-    public void GetEvents_WithPaging_Succeeds()
+    public async void GetEvents_WithPaging_Succeeds()
     {
         // Arrange
         var testEvents = new List<Event>
         {
             new Event
             {
-                Id = 1,
+                Id = Guid.NewGuid(),
                 Title = "Event In Range",
                 StartAt = new DateTime(2026, 4, 10),
                 EndAt = new DateTime(2026, 4, 12)
             },
             new Event
             {
-                Id = 2,
+                Id = Guid.NewGuid(),
                 Title = "Event Before Range",
                 StartAt = new DateTime(2026, 4, 5),
                 EndAt = new DateTime(2026, 4, 6)
             },
             new Event
             {
-                Id = 3,
+                Id = Guid.NewGuid(),
                 Title = "Event After Range",
                 StartAt = new DateTime(2026, 4, 20),
                 EndAt = new DateTime(2026, 4, 22)
@@ -308,13 +308,13 @@ public class EventServiceTests
         (!from.HasValue || e.StartAt >= from.Value) &&
         (!to.HasValue || e.EndAt <= to.Value);
 
-        _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>())).Returns((testEvents.AsQueryable().Where(predicate).ToList()));
+        _mockRepository.Setup(m => m.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>())).ReturnsAsync((testEvents.AsQueryable().Where(predicate).ToList()));
 
         // Act
-        var result = _service.GetAllEvents(page: 2, pageSize: 2);
+        var result = await _service.GetAllEventsAsync(page: 2, pageSize: 2);
 
         // Assert
-        _mockRepository.Verify(r => r.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
+        _mockRepository.Verify(r => r.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
         Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
         Assert.Single(result.Items);
         Assert.Equal(2, result.TotalPages);
@@ -323,28 +323,28 @@ public class EventServiceTests
 
     // 9. комбинированная фильтрация
     [Fact]
-    public void GetEvents_FilteringByAllParams_Succeeds()
+    public async void GetEvents_FilteringByAllParams_Succeeds()
     {
         // Arrange
         var testEvents = new List<Event>
         {
             new Event
             {
-                Id = 1,
+                Id = Guid.NewGuid(),
                 Title = "Event In Range",
                 StartAt = new DateTime(2026, 4, 10),
                 EndAt = new DateTime(2026, 4, 12)
             },
             new Event
             {
-                Id = 2,
+                Id = Guid.NewGuid(),
                 Title = "Event Before Range",
                 StartAt = new DateTime(2026, 4, 5),
                 EndAt = new DateTime(2026, 4, 6)
             },
             new Event
             {
-                Id = 3,
+                Id = Guid.NewGuid(),
                 Title = "Event After Range",
                 StartAt = new DateTime(2026, 4, 20),
                 EndAt = new DateTime(2026, 4, 22)
@@ -361,13 +361,13 @@ public class EventServiceTests
         (!from.HasValue || e.StartAt >= from.Value) &&
         (!to.HasValue || e.EndAt <= to.Value);
 
-        _mockRepository.Setup(m => m.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>())).Returns((testEvents.AsQueryable().Where(predicate).ToList()));
+        _mockRepository.Setup(m => m.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>())).ReturnsAsync((testEvents.AsQueryable().Where(predicate).ToList()));
 
         // Act
-        var result = _service.GetAllEvents(page: 1, pageSize: 2, title: title, from: from, to: to);
+        var result = await _service.GetAllEventsAsync(page: 1, pageSize: 2, title: title, from: from, to: to);
 
         // Assert
-        _mockRepository.Verify(r => r.GetAllEvents(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
+        _mockRepository.Verify(r => r.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
         Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
         Assert.Single(result.Items);
         Assert.Contains(title, result.Items.First().Title);
@@ -379,24 +379,24 @@ public class EventServiceTests
 
     // 10. попытка получить событие с несуществующим ID
     [Fact]
-    public void GetEventById_nonExistentevent_ThrowsEventNotFoundException()
+    public async void GetEventById_nonExistentevent_ThrowsEventNotFoundException()
     {
         // Arrange
-        int id = 999;
-        _mockRepository.Setup(m => m.GetEvent(It.IsAny<int>())).Returns((Event)null);
+        var id = Guid.NewGuid();
+        _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>())).ReturnsAsync((Event)null);
 
         // Assert
-        var ex = Assert.Throws<EventNotFoundException>(
-        () => _service.GetEvent(999));
+        var ex = await Assert.ThrowsAsync<EventNotFoundException>(
+        async () => await _service.GetEventAsync(id));
 
-        Assert.Contains("999", ex.Message);
+        Assert.Contains(id.ToString(), ex.Message);
 
-        _mockRepository.Verify(m => m.GetEvent(id), Times.Once);
+        _mockRepository.Verify(m => m.GetEventAsync(id), Times.Once);
     }
 
     // 11. попытка обновить событие с несуществующим ID
     [Fact]
-    public void UpdateEventById_nonExistentevent_ThrowsEventNotFoundException()
+    public async void UpdateEventById_nonExistentevent_ThrowsEventNotFoundException()
     {
         // Arrange
         var newEventData = new EventDto
@@ -406,22 +406,22 @@ public class EventServiceTests
             EndAt = DateTime.Parse("2026-04-11")
         };
 
-        int id = 999;
-        _mockRepository.Setup(m => m.GetEvent(It.IsAny<int>())).Returns((Event)null);
-        _mockRepository.Setup(m => m.UpdateEvent(It.IsAny<EventDto>(), It.IsAny<int>())).Returns(true);
+        var id = Guid.NewGuid();
+        _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>())).ReturnsAsync((Event)null);
+        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<EventDto>(), It.IsAny<Guid>())).ReturnsAsync(true);
 
         // Assert
-        var ex = Assert.Throws<EventNotFoundException>(
-        () => _service.GetEvent(999));
+        var ex = await Assert.ThrowsAsync<EventNotFoundException>(
+        async () => await _service.GetEventAsync(id));
 
         Assert.Contains("999", ex.Message);
 
-        _mockRepository.Verify(m => m.UpdateEvent(newEventData, id), Times.Never);
+        _mockRepository.Verify(m => m.UpdateEventAsync(newEventData, id), Times.Never);
     }
 
     // 12. создание события с некорректными данными(если валидация в сервисе)
     [Fact]
-    public void CreateEvent_InvalidEventData_ValidationException()
+    public async void CreateEvent_InvalidEventData_ValidationException()
     {
         // Arrange
         var eventRequest = new EventDto
@@ -429,20 +429,20 @@ public class EventServiceTests
             Title = ""
         };
 
-        _mockRepository.Setup(m => m.AddEvent(It.IsAny<EventDto>())).Returns((Event)null);
+        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<EventDto>())).ReturnsAsync((Event)null);
 
         // Assert
-        var ex = Assert.Throws<ValidationException>(
-        () => _service.AddEvent(eventRequest));
+        var ex = await Assert.ThrowsAsync<ValidationException>(
+        async () => await _service.AddEventAsync(eventRequest));
 
         Assert.Equal(3, ex.Errors.Count);
 
-        _mockRepository.Verify(m => m.AddEvent(eventRequest), Times.Never);
+        _mockRepository.Verify(m => m.AddEventAsync (eventRequest), Times.Never);
     }
 
     // 13. обновление события с некорректными датами(EndAt раньше StartAt)
     [Fact]
-    public void CreateEvent_EndAtlessStartAt_ValidationException()
+    public async void CreateEvent_EndAtlessStartAt_ValidationException()
     {
         // Arrange
         var eventRequest = new EventDto
@@ -452,14 +452,14 @@ public class EventServiceTests
             EndAt = DateTime.Parse("2026-04-10")
         };
 
-        _mockRepository.Setup(m => m.AddEvent(It.IsAny<EventDto>())).Returns((Event)null);
+        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<EventDto>())).ReturnsAsync((Event)null);
 
         // Assert
-        var ex = Assert.Throws<ValidationException>(
-        () => _service.AddEvent(eventRequest));
+        var ex = await Assert.ThrowsAsync<ValidationException>(
+        async () => await _service.AddEventAsync(eventRequest));
 
         Assert.Contains("Failed data validation", ex.Message);
 
-        _mockRepository.Verify(m => m.AddEvent(eventRequest), Times.Never);
+        _mockRepository.Verify(m => m.AddEventAsync(eventRequest), Times.Never);
     }
 }
