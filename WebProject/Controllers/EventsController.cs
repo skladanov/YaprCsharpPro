@@ -19,12 +19,6 @@ public class EventsController : ControllerBase
     {
         var result = await _bookingService.CreateBookingAsync(id);
 
-        //var value = new {
-        //    message = "Бронирование находится в обработке",
-        //    bookingId = result,
-        //    statusCheckUrl = Url.Action("GetBooking", "Bookings", new { id = result })
-        //};
-
         return AcceptedAtRoute(
             nameof(BookingsController.GetBooking),
             new { id = result },
@@ -40,21 +34,21 @@ public class EventsController : ControllerBase
         [FromQuery, Range(1, int.MaxValue)] int page = 1,
         [FromQuery, Range(1, int.MaxValue)] int pageSize = 10)
     {
-        var result = await _eventService.GetAllEvents(page, pageSize, title, from, to);
+        var result = await _eventService.GetAllEventsAsync(page, pageSize, title, from, to);
         return Ok(result);
     }
 
     [HttpGet("{id:Guid}")]
     public async Task<ActionResult<Event>> GetEvent(Guid id)
     {
-        var result = await _eventService.GetEvent(id);
+        var result = await _eventService.GetEventAsync(id);
         return Ok(result);
     }
 
     [HttpPost]
     public async Task<ActionResult<Event>> AddEvent([FromBody] EventDto newEventData)
     {
-        var createdEvent = await _eventService.AddEvent(newEventData);
+        var createdEvent = await _eventService.AddEventAsync(newEventData);
 
         return CreatedAtAction(
             nameof(GetEvent),
@@ -66,7 +60,7 @@ public class EventsController : ControllerBase
     [HttpPut("{id:Guid}")]
     public async Task<IActionResult> UpdateEvent([FromBody] EventDto newEventData, Guid id)
     {
-        await _eventService.UpdateEvent(newEventData, id);
+        await _eventService.UpdateEventAsync(newEventData, id);
 
         return NoContent();
     }
@@ -74,7 +68,7 @@ public class EventsController : ControllerBase
     [HttpDelete("{id:Guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        await _eventService.DeleteEvent(id);
+        await _eventService.DeleteEventAsync(id);
 
         return Ok(new { message = $"Event with ID {id} successfully deleted" });
     }

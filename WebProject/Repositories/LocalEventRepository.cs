@@ -12,17 +12,17 @@ public class LocalEventRepository : IEventRepository
         _mapper = mapper;
     }
 
-    public async Task<ICollection<Event>> GetAllEvents(Expression<Func<Event, bool>> predicate)
+    public async Task<ICollection<Event>> GetAllEventsAsync(Expression<Func<Event, bool>> predicate)
     {
         return _events.AsQueryable().Where(predicate).ToList();
     }
 
-    public async Task<Event?> GetEvent(Guid id)
+    public async Task<Event?> GetEventAsync(Guid id)
     {
         return _events.Where(e => e.Id == id).FirstOrDefault();
     }
 
-    public async Task<Event> AddEvent(EventDto eventDto)
+    public async Task<Event> AddEventAsync(EventDto eventDto)
     {
         Event newEventItem = new Event{
             Id = Guid.NewGuid(),
@@ -36,9 +36,9 @@ public class LocalEventRepository : IEventRepository
         return newEventItem;
     }
 
-    public async Task<bool> UpdateEvent(EventDto newEventData, Guid id)
+    public async Task<bool> UpdateEventAsync(EventDto newEventData, Guid id)
     {
-        var existingEvent = GetEvent(id);
+        var existingEvent = GetEventAsync(id);
         if (existingEvent == null)
             return false;
 
@@ -47,9 +47,9 @@ public class LocalEventRepository : IEventRepository
         return true;
     }
 
-    public async Task<bool> DeleteEvent(Guid id)
+    public async Task<bool> DeleteEventAsync(Guid id)
     {
-        var existingEvent = await GetEvent(id);
+        var existingEvent = await GetEventAsync(id);
 
         if (existingEvent == null) return false;
 

@@ -12,7 +12,7 @@ public class BookingService : IBookingService
 
     public async Task<Guid> CreateBookingAsync(Guid id)
     {
-        var eventItem = await _eventService.GetEvent(id);
+        var eventItem = await _eventService.GetEventAsync(id);
         if (eventItem == null || eventItem.Id != id)
             throw new EventNotFoundException(id);
 
