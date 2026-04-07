@@ -7,6 +7,7 @@ builder.Services.AddSingleton<IEventService, EventService>();
 builder.Services.AddSingleton<IBookingService, BookingService>();
 builder.Services.AddSingleton<IEventRepository, LocalEventRepository>();
 builder.Services.AddSingleton<IBookingRepository, LocalBookingRepository>();
+builder.Services.AddHostedService<BookingProcessService>();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 

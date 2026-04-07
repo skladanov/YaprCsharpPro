@@ -21,4 +21,9 @@ public class LocalBookingRepository : IBookingRepository
         var booking = _bookings.FirstOrDefault(b => b.Id == bookingId);
         return await Task.FromResult(booking);
     }
+
+    public async Task<List<Booking>?> GetPendingBookings()
+    {
+        return _bookings.AsQueryable().Where(b => b.Status == Booking.BookingStatus.Pending).ToList();
+    }
 }
