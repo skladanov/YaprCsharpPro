@@ -33,13 +33,13 @@ public class EventServiceTests
             StartAt = DateTime.Parse("2026-04-10"),
             EndAt = DateTime.Parse("2026-04-11")
         };
-        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<EventDto>())).ReturnsAsync(eventResult);
+        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<EventDto>(), default)).ReturnsAsync(eventResult);
 
         // Act
-        var result = await _service.AddEventAsync(eventRequest);
+        var result = await _service.AddEventAsync(eventRequest, default);
 
         // Assert
-        _mockRepository.Verify(r => r.AddEventAsync(It.IsAny<EventDto>()), Times.Once);
+        _mockRepository.Verify(r => r.AddEventAsync(It.IsAny<EventDto>(), default), Times.Once);
 
         Assert.Equal(eventRequest.Title, result.Title);
     }
@@ -74,13 +74,13 @@ public class EventServiceTests
             }
         };
 
-        _mockRepository.Setup(m => m.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>())).ReturnsAsync((testEvents.ToList()));
+        _mockRepository.Setup(m => m.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>(), default)).ReturnsAsync((testEvents.ToList()));
 
         // Act
         var result = await _service.GetAllEventsAsync();
 
         // Assert
-        _mockRepository.Verify(r => r.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
+        _mockRepository.Verify(r => r.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>(), default), Times.Once);
         Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
         Assert.Equal(3, result.TotalCount);
     }
@@ -97,10 +97,10 @@ public class EventServiceTests
             StartAt = DateTime.Parse("2026-04-10"),
             EndAt = DateTime.Parse("2026-04-11")
         };
-        _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>())).ReturnsAsync(eventResult);
+        _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(eventResult);
 
         // Act
-        var result = await _service.GetEventAsync(eventResult.Id);
+        var result = await _service.GetEventAsync(eventResult.Id, default);
 
         // Assert
         Assert.IsAssignableFrom<Event>(result);
@@ -125,19 +125,14 @@ public class EventServiceTests
             StartAt = DateTime.Parse("2026-04-10"),
             EndAt = DateTime.Parse("2026-04-11")
         };
-        _mockRepository.Setup(m => m.GetEventAsync(It.Is<Guid>(id => id == existsEvent.Id))).ReturnsAsync(existsEvent);
-        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<EventDto>(), It.Is<Guid>(id => id == existsEvent.Id))).ReturnsAsync(true);
+        _mockRepository.Setup(m => m.GetEventAsync(It.Is<Guid>(id => id == existsEvent.Id), default)).ReturnsAsync(existsEvent);
+        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<EventDto>(), It.Is<Guid>(id => id == existsEvent.Id), default)).ReturnsAsync(true);
 
         // Act
-        await _service.UpdateEventAsync(newEventData, existsEvent.Id);
+        await _service.UpdateEventAsync(newEventData, existsEvent.Id, default);
 
         // Assert
-        _mockRepository.Verify(m => m.UpdateEventAsync(It.Is<EventDto>(dto =>
-            dto.Title == "UpdatedTitle" &&
-            dto.StartAt == DateTime.Parse("2026-04-10") &&
-            dto.EndAt == DateTime.Parse("2026-04-11")),
-        It.Is<Guid>(id => id == existsEvent.Id)),
-        Times.Once);
+        _mockRepository.Verify(m => m.UpdateEventAsync(newEventData, It.Is<Guid>(id => id == existsEvent.Id), default), Times.Once);
     }
 
     // 5. удаление существующего события
@@ -152,16 +147,14 @@ public class EventServiceTests
             StartAt = DateTime.Parse("2026-04-10"),
             EndAt = DateTime.Parse("2026-04-11")
         };
-        _mockRepository.Setup(m => m.GetEventAsync(It.Is<Guid>(id => id == existsEvent.Id))).ReturnsAsync(existsEvent);
-        _mockRepository.Setup(m => m.DeleteEventAsync(It.IsAny<Guid>())).ReturnsAsync(true);
+        _mockRepository.Setup(m => m.GetEventAsync(It.Is<Guid>(id => id == existsEvent.Id), default)).ReturnsAsync(existsEvent);
+        _mockRepository.Setup(m => m.DeleteEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(true);
 
         // Act
-        await _service.DeleteEventAsync(existsEvent.Id);
+        await _service.DeleteEventAsync(existsEvent.Id, default);
 
         // Assert
-        _mockRepository.Verify(m => m.DeleteEventAsync(
-        It.Is<Guid>(id => id == existsEvent.Id)),
-        Times.Once);
+        _mockRepository.Verify(m => m.DeleteEventAsync(It.Is<Guid>(id => id == existsEvent.Id), default), Times.Once);
     }
 
     // 6. фильтрация по названию
@@ -203,13 +196,13 @@ public class EventServiceTests
         (!from.HasValue || e.StartAt >= from.Value) &&
         (!to.HasValue || e.EndAt <= to.Value);
 
-        _mockRepository.Setup(m => m.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>())).ReturnsAsync((testEvents.AsQueryable().Where(predicate).ToList()));
+        _mockRepository.Setup(m => m.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>(), default)).ReturnsAsync((testEvents.AsQueryable().Where(predicate).ToList()));
 
         // Act
         var result = await _service.GetAllEventsAsync(title: title);
 
         // Assert
-        _mockRepository.Verify(r => r.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
+        _mockRepository.Verify(r => r.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>(), default), Times.Once);
         Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
         Assert.Single(result.Items);
         Assert.Contains(title, result.Items.First().Title);
@@ -255,14 +248,14 @@ public class EventServiceTests
         (!from.HasValue || e.StartAt >= from.Value) &&
         (!to.HasValue || e.EndAt <= to.Value);
 
-        _mockRepository.Setup(m => m.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>())).ReturnsAsync((testEvents.AsQueryable().Where(predicate).ToList()));
+        _mockRepository.Setup(m => m.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>(), default)).ReturnsAsync((testEvents.AsQueryable().Where(predicate).ToList()));
 
 
         // Act
         var result = await _service.GetAllEventsAsync(from: from, to: to);
 
         // Assert
-        _mockRepository.Verify(r => r.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
+        _mockRepository.Verify(r => r.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>(), default), Times.Once);
         Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
         Assert.Single(result.Items);
         Assert.Equal("Event In Range", result.Items.First().Title);
@@ -308,13 +301,13 @@ public class EventServiceTests
         (!from.HasValue || e.StartAt >= from.Value) &&
         (!to.HasValue || e.EndAt <= to.Value);
 
-        _mockRepository.Setup(m => m.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>())).ReturnsAsync((testEvents.AsQueryable().Where(predicate).ToList()));
+        _mockRepository.Setup(m => m.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>(), default)).ReturnsAsync((testEvents.AsQueryable().Where(predicate).ToList()));
 
         // Act
         var result = await _service.GetAllEventsAsync(page: 2, pageSize: 2);
 
         // Assert
-        _mockRepository.Verify(r => r.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
+        _mockRepository.Verify(r => r.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>(), default), Times.Once);
         Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
         Assert.Single(result.Items);
         Assert.Equal(2, result.TotalPages);
@@ -361,13 +354,13 @@ public class EventServiceTests
         (!from.HasValue || e.StartAt >= from.Value) &&
         (!to.HasValue || e.EndAt <= to.Value);
 
-        _mockRepository.Setup(m => m.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>())).ReturnsAsync((testEvents.AsQueryable().Where(predicate).ToList()));
+        _mockRepository.Setup(m => m.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>(), default)).ReturnsAsync((testEvents.AsQueryable().Where(predicate).ToList()));
 
         // Act
         var result = await _service.GetAllEventsAsync(page: 1, pageSize: 2, title: title, from: from, to: to);
 
         // Assert
-        _mockRepository.Verify(r => r.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>()), Times.Once);
+        _mockRepository.Verify(r => r.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>(), default), Times.Once);
         Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
         Assert.Single(result.Items);
         Assert.Contains(title, result.Items.First().Title);
@@ -383,15 +376,16 @@ public class EventServiceTests
     {
         // Arrange
         var id = Guid.NewGuid();
-        _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>())).ReturnsAsync((Event)null);
+
+        _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>(),default)).ReturnsAsync((Event)null);
 
         // Assert
         var ex = await Assert.ThrowsAsync<EventNotFoundException>(
-        async () => await _service.GetEventAsync(id));
+            async () => await _service.GetEventAsync(id, default));
 
         Assert.Contains(id.ToString(), ex.Message);
 
-        _mockRepository.Verify(m => m.GetEventAsync(id), Times.Once);
+        _mockRepository.Verify(m => m.GetEventAsync(id, default), Times.Once);
     }
 
     // 11. попытка обновить событие с несуществующим ID
@@ -407,16 +401,16 @@ public class EventServiceTests
         };
 
         var id = Guid.NewGuid();
-        _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>())).ReturnsAsync((Event)null);
-        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<EventDto>(), It.IsAny<Guid>())).ReturnsAsync(true);
+        _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync((Event)null);
+        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<EventDto>(), It.IsAny<Guid>(), default)).ReturnsAsync(true);
 
         // Assert
         var ex = await Assert.ThrowsAsync<EventNotFoundException>(
-        async () => await _service.GetEventAsync(id));
+        async () => await _service.GetEventAsync(id, default));
 
         Assert.Contains("999", ex.Message);
 
-        _mockRepository.Verify(m => m.UpdateEventAsync(newEventData, id), Times.Never);
+        _mockRepository.Verify(m => m.UpdateEventAsync(newEventData, id, default), Times.Never);
     }
 
     // 12. создание события с некорректными данными(если валидация в сервисе)
@@ -429,15 +423,15 @@ public class EventServiceTests
             Title = ""
         };
 
-        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<EventDto>())).ReturnsAsync((Event)null);
+        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<EventDto>(), default)).ReturnsAsync((Event)null);
 
         // Assert
         var ex = await Assert.ThrowsAsync<ValidationException>(
-        async () => await _service.AddEventAsync(eventRequest));
+        async () => await _service.AddEventAsync(eventRequest, default));
 
         Assert.Equal(3, ex.Errors.Count);
 
-        _mockRepository.Verify(m => m.AddEventAsync (eventRequest), Times.Never);
+        _mockRepository.Verify(m => m.AddEventAsync(eventRequest, default), Times.Never);
     }
 
     // 13. обновление события с некорректными датами(EndAt раньше StartAt)
@@ -452,14 +446,14 @@ public class EventServiceTests
             EndAt = DateTime.Parse("2026-04-10")
         };
 
-        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<EventDto>())).ReturnsAsync((Event)null);
+        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<EventDto>(), default)).ReturnsAsync((Event)null);
 
         // Assert
         var ex = await Assert.ThrowsAsync<ValidationException>(
-        async () => await _service.AddEventAsync(eventRequest));
+        async () => await _service.AddEventAsync(eventRequest, default));
 
         Assert.Contains("Failed data validation", ex.Message);
 
-        _mockRepository.Verify(m => m.AddEventAsync(eventRequest), Times.Never);
+        _mockRepository.Verify(m => m.AddEventAsync(eventRequest, default), Times.Never);
     }
 }
