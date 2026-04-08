@@ -13,7 +13,7 @@ public class EventService : IEventService
         _repository = repository;
     }
 
-    public async Task<PaginatedResult<Event>> GetAllEventsAsync(int page = 1, int pageSize = 10, string? title = null, DateTime? from = null, DateTime? to = null)
+    public async Task<PaginatedResult<Event>> GetAllEventsAsync(int page = 1, int pageSize = 10, string? title = null, DateTime? from = null, DateTime? to = null, CancellationToken token = default)
     {
         Expression<Func<Event, bool>> predicate = e =>
         (string.IsNullOrEmpty(title) ||
@@ -21,7 +21,7 @@ public class EventService : IEventService
         (!from.HasValue || e.StartAt >= from.Value) &&
         (!to.HasValue || e.EndAt <= to.Value);
 
-        ICollection<Event> allEvents = await _repository.GetAllEventsAsync(predicate);
+        ICollection<Event> allEvents = await _repository.GetAllEventsAsync(predicate, token);
 
         if (allEvents == null)
         {
@@ -46,9 +46,9 @@ public class EventService : IEventService
         };
     }
 
-    public async Task<Event?> GetEventAsync(Guid id)
+    public async Task<Event?> GetEventAsync(Guid id, CancellationToken token)
     {
-        var existingEvent = await _repository.GetEventAsync(id);
+        var existingEvent = await _repository.GetEventAsync(id, token);
 
         if (existingEvent == null)
             throw new EventNotFoundException(id);
@@ -56,11 +56,11 @@ public class EventService : IEventService
         return existingEvent;
     }
 
-    public async Task<Event> AddEventAsync(EventDto newEventData)
+    public async Task<Event> AddEventAsync(EventDto newEventData, CancellationToken token)
     {
         ValidateRequestEvent(newEventData);
 
-        var createdEvent = await _repository.AddEventAsync(newEventData);
+        var createdEvent = await _repository.AddEventAsync(newEventData, token);
 
         if (createdEvent == null)
             throw new ExternalException("Failed to create event");
@@ -68,23 +68,23 @@ public class EventService : IEventService
         return createdEvent;
     }
 
-    public async Task UpdateEventAsync(EventDto newEventData, Guid id)
+    public async Task UpdateEventAsync(EventDto newEventData, Guid id, CancellationToken token)
     {
         ValidateRequestEvent(newEventData);
 
-        if (await GetEventAsync(id) == null)
+        if (await GetEventAsync(id, token) == null)
             throw new EventNotFoundException(id);
 
-        if (!await _repository.UpdateEventAsync(newEventData, id))
+        if (!await _repository.UpdateEventAsync(newEventData, id, token))
             throw new ExternalException("Failed to update event");
     }
 
-    public async Task DeleteEventAsync(Guid id)
+    public async Task DeleteEventAsync(Guid id, CancellationToken token)
     {
-        if (await GetEventAsync(id) == null)
+        if (await GetEventAsync(id, token) == null)
             throw new EventNotFoundException(id);
 
-        if (!await _repository.DeleteEventAsync(id))
+        if (!await _repository.DeleteEventAsync(id, token))
             throw new ExternalException("Failed to delete event");
     }
 

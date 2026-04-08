@@ -15,9 +15,9 @@ public class EventsController : ControllerBase
     }
 
     [HttpPost("{id:Guid}/book")]
-    public async Task<IActionResult> CreateBooking(Guid id)
+    public async Task<IActionResult> CreateBooking(Guid id, CancellationToken token)
     {
-        var result = await _bookingService.CreateBookingAsync(id);
+        var result = await _bookingService.CreateBookingAsync(id, token);
 
         return AcceptedAtRoute(
             nameof(BookingsController.GetBooking),
@@ -32,23 +32,24 @@ public class EventsController : ControllerBase
         [FromQuery] DateTime? from = null,
         [FromQuery] DateTime? to = null,
         [FromQuery, Range(1, int.MaxValue)] int page = 1,
-        [FromQuery, Range(1, int.MaxValue)] int pageSize = 10)
+        [FromQuery, Range(1, int.MaxValue)] int pageSize = 10,
+        CancellationToken token = default)
     {
-        var result = await _eventService.GetAllEventsAsync(page, pageSize, title, from, to);
+        var result = await _eventService.GetAllEventsAsync(page, pageSize, title, from, to, token);
         return Ok(result);
     }
 
     [HttpGet("{id:Guid}")]
-    public async Task<ActionResult<Event>> GetEvent(Guid id)
+    public async Task<ActionResult<Event>> GetEvent(Guid id, CancellationToken token)
     {
-        var result = await _eventService.GetEventAsync(id);
+        var result = await _eventService.GetEventAsync(id, token);
         return Ok(result);
     }
 
     [HttpPost]
-    public async Task<ActionResult<Event>> AddEvent([FromBody] EventDto newEventData)
+    public async Task<ActionResult<Event>> AddEvent([FromBody] EventDto newEventData, CancellationToken token)
     {
-        var createdEvent = await _eventService.AddEventAsync(newEventData);
+        var createdEvent = await _eventService.AddEventAsync(newEventData, token);
 
         return CreatedAtAction(
             nameof(GetEvent),
@@ -58,17 +59,17 @@ public class EventsController : ControllerBase
     }
 
     [HttpPut("{id:Guid}")]
-    public async Task<IActionResult> UpdateEvent([FromBody] EventDto newEventData, Guid id)
+    public async Task<IActionResult> UpdateEvent([FromBody] EventDto newEventData, Guid id, CancellationToken token)
     {
-        await _eventService.UpdateEventAsync(newEventData, id);
+        await _eventService.UpdateEventAsync(newEventData, id, token);
 
         return NoContent();
     }
 
     [HttpDelete("{id:Guid}")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken token)
     {
-        await _eventService.DeleteEventAsync(id);
+        await _eventService.DeleteEventAsync(id, token);
 
         return Ok(new { message = $"Event with ID {id} successfully deleted" });
     }

@@ -11,9 +11,9 @@ public class BookingsController : ControllerBase
     }
 
     [HttpGet("{id:Guid}", Name = "GetBooking")]
-    public async Task<ActionResult<Booking>> GetBooking(Guid id)
+    public async Task<ActionResult<Booking>> GetBooking(Guid id, CancellationToken token)
     {
-        var result = await _bookingService.GetBookingByIdAsync(id);
+        var result = await _bookingService.GetBookingByIdAsync(id, token);
         return Ok(result);
     }
 }

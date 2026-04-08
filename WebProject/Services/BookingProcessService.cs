@@ -15,7 +15,7 @@ public class BookingProcessService : BackgroundService
             {
                 await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
 
-                var pendingBookings = await _bookingRepository.GetPendingBookings();
+                var pendingBookings = await _bookingRepository.GetPendingBookings(stoppingToken);
                 if (pendingBookings?.Any() == true)
                 {
                     pendingBookings.ForEach(booking =>

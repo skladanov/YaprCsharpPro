@@ -2,7 +2,7 @@ public class LocalBookingRepository : IBookingRepository
 { 
     List<Booking> _bookings = new();
 
-    public async Task<Guid> CreateBookingAsync(Guid eventId)
+    public async Task<Guid> CreateBookingAsync(Guid eventId, CancellationToken token)
     {
         Booking booking = new Booking
         {
@@ -16,13 +16,13 @@ public class LocalBookingRepository : IBookingRepository
         return booking.Id;
     }
 
-    public async Task<Booking?> GetBookingByIdAsync(Guid bookingId)
+    public async Task<Booking?> GetBookingByIdAsync(Guid bookingId, CancellationToken token)
     {
         var booking = _bookings.FirstOrDefault(b => b.Id == bookingId);
         return booking;
     }
 
-    public async Task<List<Booking>?> GetPendingBookings()
+    public async Task<List<Booking>?> GetPendingBookings(CancellationToken token)
     {
         return _bookings.AsQueryable().Where(b => b.Status == Booking.BookingStatus.Pending).ToList();
     }
