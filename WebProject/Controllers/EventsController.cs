@@ -49,12 +49,12 @@ public class EventsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Event>> AddEvent([FromBody] EventDto newEventData, CancellationToken token)
     {
-        var createdEvent = await _eventService.AddEventAsync(newEventData, token);
+        var newEventId = await _eventService.AddEventAsync(newEventData, token);
 
         return CreatedAtAction(
             nameof(GetEvent),
-            new { id = createdEvent.Id },
-            createdEvent
+            new { id = newEventId },
+            newEventId
         );
     }
 

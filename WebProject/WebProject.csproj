@@ -16,7 +16,6 @@
     <Folder Include="Models\" />
     <Folder Include="Repositories\" />
     <Folder Include="DTOs\" />
-    <Folder Include="Mapping\" />
     <Folder Include="Exceptions\" />
   </ItemGroup>
 

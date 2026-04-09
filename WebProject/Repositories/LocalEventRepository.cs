@@ -1,28 +1,27 @@
 using AutoMapper;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
 public class LocalEventRepository : IEventRepository
 {
-    private readonly IMapper _mapper;
     List<Event> _events = new();
-    private int _nextId = 1;
-
-    public LocalEventRepository(IMapper mapper)
-    {
-        _mapper = mapper;
-    }
 
     public async Task<ICollection<Event>> GetAllEventsAsync(Expression<Func<Event, bool>> predicate, CancellationToken token)
     {
         return _events.AsQueryable().Where(predicate).ToList();
     }
 
-    public async Task<Event?> GetEventAsync(Guid id, CancellationToken token)
+    public async Task<Event?> GetEventAsync(Guid existingEventId, CancellationToken token)
     {
-        return _events.Where(e => e.Id == id).FirstOrDefault();
+        var existingEvent = _events.Where(e => e.Id == existingEventId).FirstOrDefault();
+
+        if (existingEvent == null)
+            throw new EventNotFoundException(existingEventId);
+
+        return existingEvent;
     }
 
-    public async Task<Event> AddEventAsync(EventDto eventDto, CancellationToken token)
+    public async Task<Guid> AddEventAsync(EventDto eventDto, CancellationToken token)
     {
         Event newEventItem = new Event{
             Id = Guid.NewGuid(),
@@ -33,28 +32,24 @@ public class LocalEventRepository : IEventRepository
         };
 
         _events.Add(newEventItem);
-        return newEventItem;
+
+        return newEventItem.Id;
     }
 
-    public async Task<bool> UpdateEventAsync(EventDto newEventData, Guid id, CancellationToken token)
+    public async Task UpdateEventAsync(EventDto newEventData, Guid existingEventId, CancellationToken token)
     {
-        var existingEvent = GetEventAsync(id, token);
-        if (existingEvent == null)
-            return false;
+        var existingEvent = await GetEventAsync(existingEventId, token);
 
-        _mapper.Map(newEventData, existingEvent);
-
-        return true;
+        existingEvent!.Title = newEventData.Title;
+        existingEvent!.Description = newEventData.Description;
+        existingEvent!.StartAt = newEventData.StartAt;
+        existingEvent!.EndAt = newEventData.EndAt;
     }
 
-    public async Task<bool> DeleteEventAsync(Guid id, CancellationToken token)
+    public async Task DeleteEventAsync(Guid existingEventId, CancellationToken token)
     {
-        var existingEvent = await GetEventAsync(id, token);
+        var existingEvent = await GetEventAsync(existingEventId, token);
 
-        if (existingEvent == null) return false;
-
-        _events.Remove(existingEvent);
-
-        return true;
+        _events.Remove(existingEvent!);
     }
 }

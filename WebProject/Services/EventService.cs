@@ -1,16 +1,20 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc.Diagnostics;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using System;
 using System.Linq.Expressions;
 using System.Runtime.InteropServices;
+using static System.Net.WebRequestMethods;
 
 public class EventService : IEventService
 {
     private readonly IEventRepository _repository;
+    private readonly ILogger<EventService> _logger;
 
-    public EventService(IEventRepository repository)
+    public EventService(IEventRepository repository, ILogger<EventService> logger)
     {
         _repository = repository;
+        _logger = logger;
     }
 
     public async Task<PaginatedResult<Event>> GetAllEventsAsync(int page = 1, int pageSize = 10, string? title = null, DateTime? from = null, DateTime? to = null, CancellationToken token = default)
@@ -50,48 +54,40 @@ public class EventService : IEventService
     {
         var existingEvent = await _repository.GetEventAsync(id, token);
 
-        if (existingEvent == null)
-            throw new EventNotFoundException(id);
-
         return existingEvent;
     }
 
-    public async Task<Event> AddEventAsync(EventDto newEventData, CancellationToken token)
+    public async Task<Guid> AddEventAsync(EventDto newEventData, CancellationToken token)
     {
         ValidateRequestEvent(newEventData);
 
-        var createdEvent = await _repository.AddEventAsync(newEventData, token);
+        var newEventId = await _repository.AddEventAsync(newEventData, token);
 
-        if (createdEvent == null)
-            throw new ExternalException("Failed to create event");
-
-        return createdEvent;
+        return newEventId;
     }
 
     public async Task UpdateEventAsync(EventDto newEventData, Guid id, CancellationToken token)
     {
         ValidateRequestEvent(newEventData);
 
-        if (await GetEventAsync(id, token) == null)
-            throw new EventNotFoundException(id);
+        await GetEventAsync(id, token); // Check event
 
-        if (!await _repository.UpdateEventAsync(newEventData, id, token))
-            throw new ExternalException("Failed to update event");
+        await _repository.UpdateEventAsync(newEventData, id, token);
     }
 
     public async Task DeleteEventAsync(Guid id, CancellationToken token)
     {
-        if (await GetEventAsync(id, token) == null)
-            throw new EventNotFoundException(id);
+        await GetEventAsync(id, token); // Check event
 
-        if (!await _repository.DeleteEventAsync(id, token))
-            throw new ExternalException("Failed to delete event");
+        await _repository.DeleteEventAsync(id, token);
     }
 
     private void ValidateRequestEvent(EventDto newEventData)
     {
         if (newEventData == null)
+        {
             throw new ValidationException("", "Request body is empty");
+        }
 
         var errors = new Dictionary<string, string[]>();
 
