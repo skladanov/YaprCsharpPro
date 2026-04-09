@@ -16,8 +16,17 @@ public class BookingService : IBookingService
         if (eventItem == null || eventItem.Id != id)
             throw new EventNotFoundException(id);
 
-        var bookingId = await _bookingRepositiry.CreateBookingAsync(id, token);
-        return bookingId;
+        Booking booking = new Booking
+        {
+            Id = Guid.NewGuid(),
+            EventId = id,
+            Status = Booking.BookingStatus.Pending,
+            CreatedAt = DateTime.Now,
+        };
+
+        await _bookingRepositiry.CreateBookingAsync(booking, token);
+
+        return booking.Id;
     }
 
     public async Task<Booking?> GetBookingByIdAsync(Guid bookingId, CancellationToken token)
