@@ -408,7 +408,7 @@ public class EventServiceTests
         var ex = await Assert.ThrowsAsync<EventNotFoundException>(
         async () => await _service.GetEventAsync(id, default));
 
-        Assert.Contains("999", ex.Message);
+        Assert.Contains(id.ToString(), ex.Message);
 
         _mockRepository.Verify(m => m.UpdateEventAsync(newEventData, id, default), Times.Never);
     }
