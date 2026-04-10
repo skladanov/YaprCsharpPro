@@ -16,37 +16,40 @@ public class EventServiceTests
 
     // 1. создание события
     [Fact]
-    public async void CreateEvent_Succeeds()
+    public async Task CreateEvent_Succeeds()
     {
         // Arrange
         var eventRequest = new EventDto
         {
             Title = "TitleString",
-            StartAt = DateTime.Parse("2026-04-10"),
-            EndAt = DateTime.Parse("2026-04-11")
+            StartAt = DateTime.Now,
+            EndAt = DateTime.Now + TimeSpan.FromDays(1)
         };
 
-        var eventResult = new Event
-        {
-            Id = Guid.NewGuid(),
-            Title = "TitleString",
-            StartAt = DateTime.Parse("2026-04-10"),
-            EndAt = DateTime.Parse("2026-04-11")
-        };
-        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<EventDto>(), default)).ReturnsAsync(eventResult);
+        var resultEventId = Guid.NewGuid();
+
+        _mockRepository
+            .Setup(m => m.AddEventAsync(It.IsAny<EventDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(resultEventId);
 
         // Act
         var result = await _service.AddEventAsync(eventRequest, default);
 
         // Assert
-        _mockRepository.Verify(r => r.AddEventAsync(It.IsAny<EventDto>(), default), Times.Once);
+        _mockRepository.Verify(
+            r => r.AddEventAsync(
+                It.IsAny<EventDto>(),
+                It.IsAny<CancellationToken>()
+            ),
+            Times.Once
+        );
 
-        Assert.Equal(eventRequest.Title, result.Title);
+        Assert.Equal(resultEventId, result);
     }
 
     // 2. получение всех событий
     [Fact]
-    public async void GetAllEvents_WithoutFilters_Succeeds()
+    public async Task GetAllEvents_WithoutFilters_Succeeds()
     {
         // Arrange
         var testEvents = new List<Event>
@@ -87,15 +90,15 @@ public class EventServiceTests
 
     // 3. получение события по ID
     [Fact]
-    public async void GetEventById_Succeeds()
+    public async Task GetEventById_Succeeds()
     {
         // Arrange
         var eventResult = new Event
         {
             Id = Guid.NewGuid(),
             Title = "TitleString",
-            StartAt = DateTime.Parse("2026-04-10"),
-            EndAt = DateTime.Parse("2026-04-11")
+            StartAt = DateTime.Now,
+            EndAt = DateTime.Now.AddDays(1)
         };
         _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(eventResult);
 
@@ -109,24 +112,25 @@ public class EventServiceTests
 
     // 4. обновление существующего события
     [Fact]
-    public async void UpdateExistingEvent_Succeeds()
+    public async Task UpdateExistingEvent_Succeeds()
     {
         // Arrange
         var existsEvent = new Event
         {
             Id = Guid.NewGuid(),
             Title = "TitleString",
-            StartAt = DateTime.Parse("2026-04-10"),
-            EndAt = DateTime.Parse("2026-04-11")
+            StartAt = DateTime.Now,
+            EndAt = DateTime.Now.AddDays(2)
         };
+
         var newEventData = new EventDto
         {
             Title = "UpdatedTitle",
-            StartAt = DateTime.Parse("2026-04-10"),
-            EndAt = DateTime.Parse("2026-04-11")
+            StartAt = DateTime.Now.AddDays(2),
+            EndAt = DateTime.Now.AddDays(4)
         };
-        _mockRepository.Setup(m => m.GetEventAsync(It.Is<Guid>(id => id == existsEvent.Id), default)).ReturnsAsync(existsEvent);
-        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<EventDto>(), It.Is<Guid>(id => id == existsEvent.Id), default)).ReturnsAsync(true);
+
+        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<EventDto>(), It.Is<Guid>(id => id == existsEvent.Id), default));
 
         // Act
         await _service.UpdateEventAsync(newEventData, existsEvent.Id, default);
@@ -137,18 +141,18 @@ public class EventServiceTests
 
     // 5. удаление существующего события
     [Fact]
-    public async void DeleteExistingEvent_Succeeds()
+    public async Task DeleteExistingEvent_Succeeds()
     {
         // Arrange
         var existsEvent = new Event
         {
             Id = Guid.NewGuid(),
             Title = "TitleString",
-            StartAt = DateTime.Parse("2026-04-10"),
-            EndAt = DateTime.Parse("2026-04-11")
+            StartAt = DateTime.Now,
+            EndAt = DateTime.Now.AddDays(2)
         };
-        _mockRepository.Setup(m => m.GetEventAsync(It.Is<Guid>(id => id == existsEvent.Id), default)).ReturnsAsync(existsEvent);
-        _mockRepository.Setup(m => m.DeleteEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(true);
+
+        _mockRepository.Setup(m => m.DeleteEventAsync(It.IsAny<Guid>(), default));
 
         // Act
         await _service.DeleteEventAsync(existsEvent.Id, default);
@@ -159,7 +163,7 @@ public class EventServiceTests
 
     // 6. фильтрация по названию
     [Fact]
-    public async void GetEvents_FilteringByTitle_Succeeds()
+    public async Task GetEvents_FilteringByTitle_Succeeds()
     {
         // Arrange
         var testEvents = new List<Event>
@@ -168,22 +172,22 @@ public class EventServiceTests
             {
                 Id = Guid.NewGuid(),
                 Title = "Event In Range",
-                StartAt = new DateTime(2026, 4, 10),
-                EndAt = new DateTime(2026, 4, 12)
+                StartAt = DateTime.Now,
+                EndAt = DateTime.Now.AddDays(2),
             },
             new Event
             {
                 Id = Guid.NewGuid(),
                 Title = "Event Before Range",
-                StartAt = new DateTime(2026, 4, 5),
-                EndAt = new DateTime(2026, 4, 6)
+                StartAt = DateTime.Now.AddDays(1),
+                EndAt = DateTime.Now.AddDays(2)
             },
             new Event
             {
                 Id = Guid.NewGuid(),
                 Title = "Event After Range",
-                StartAt = new DateTime(2026, 4, 20),
-                EndAt = new DateTime(2026, 4, 22)
+                StartAt = DateTime.Now.AddDays(1),
+                EndAt = DateTime.Now.AddDays(2)
             }
         };
         string title = "Event In";
@@ -210,7 +214,7 @@ public class EventServiceTests
 
     // 7. фильтрация по датам(startDate < endDate)
     [Fact]
-    public async void GetEvents_FilteringBy_StartDat_EndDate_Succeeds()
+    public async Task GetEvents_FilteringBy_StartDat_EndDate_Succeeds()
     {
         // Arrange
         var testEvents = new List<Event>
@@ -239,8 +243,8 @@ public class EventServiceTests
         };
 
         string title = "Event In";
-        DateTime? from = new DateTime(2026, 4, 8);
-        DateTime? to = new DateTime(2026, 4, 15);
+        DateTime? from = new DateTime(2026, 4, 9);
+        DateTime? to = new DateTime(2026, 4, 13);
 
         Expression<Func<Event, bool>> predicate = e =>
         (string.IsNullOrEmpty(title) ||
@@ -263,7 +267,7 @@ public class EventServiceTests
 
     // 8. пагинация событий
     [Fact]
-    public async void GetEvents_WithPaging_Succeeds()
+    public async Task GetEvents_WithPaging_Succeeds()
     {
         // Arrange
         var testEvents = new List<Event>
@@ -316,7 +320,7 @@ public class EventServiceTests
 
     // 9. комбинированная фильтрация
     [Fact]
-    public async void GetEvents_FilteringByAllParams_Succeeds()
+    public async Task GetEvents_FilteringByAllParams_Succeeds()
     {
         // Arrange
         var testEvents = new List<Event>
@@ -372,12 +376,12 @@ public class EventServiceTests
 
     // 10. попытка получить событие с несуществующим ID
     [Fact]
-    public async void GetEventById_nonExistentevent_ThrowsEventNotFoundException()
+    public async Task GetEventById_nonExistentevent_ThrowsEventNotFoundException()
     {
         // Arrange
         var id = Guid.NewGuid();
 
-        _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>(),default)).ReturnsAsync((Event)null);
+        _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync((Event)null);
 
         // Assert
         var ex = await Assert.ThrowsAsync<EventNotFoundException>(
@@ -390,7 +394,7 @@ public class EventServiceTests
 
     // 11. попытка обновить событие с несуществующим ID
     [Fact]
-    public async void UpdateEventById_nonExistentevent_ThrowsEventNotFoundException()
+    public async Task UpdateEventById_nonExistentevent_ThrowsEventNotFoundException()
     {
         // Arrange
         var newEventData = new EventDto
@@ -401,8 +405,8 @@ public class EventServiceTests
         };
 
         var id = Guid.NewGuid();
-        _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync((Event)null);
-        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<EventDto>(), It.IsAny<Guid>(), default)).ReturnsAsync(true);
+
+        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<EventDto>(), It.IsAny<Guid>(), default));
 
         // Assert
         var ex = await Assert.ThrowsAsync<EventNotFoundException>(
@@ -423,7 +427,7 @@ public class EventServiceTests
             Title = ""
         };
 
-        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<EventDto>(), default)).ReturnsAsync((Event)null);
+        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<EventDto>(), default));
 
         // Assert
         var ex = await Assert.ThrowsAsync<ValidationException>(
@@ -442,11 +446,11 @@ public class EventServiceTests
         var eventRequest = new EventDto
         {
             Title = "TitleString",
-            StartAt = DateTime.Parse("2026-04-11"),
-            EndAt = DateTime.Parse("2026-04-10")
+            StartAt = DateTime.Now,
+            EndAt = DateTime.Now - TimeSpan.FromDays(1)
         };
 
-        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<EventDto>(), default)).ReturnsAsync((Event)null);
+        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<EventDto>(), default));
 
         // Assert
         var ex = await Assert.ThrowsAsync<ValidationException>(
