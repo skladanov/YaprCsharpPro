@@ -9,12 +9,10 @@ using static System.Net.WebRequestMethods;
 public class EventService : IEventService
 {
     private readonly IEventRepository _repository;
-    private readonly ILogger<EventService> _logger;
 
-    public EventService(IEventRepository repository, ILogger<EventService> logger)
+    public EventService(IEventRepository repository)
     {
         _repository = repository;
-        _logger = logger;
     }
 
     public async Task<PaginatedResult<Event>> GetAllEventsAsync(int page = 1, int pageSize = 10, string? title = null, DateTime? from = null, DateTime? to = null, CancellationToken token = default)
@@ -53,6 +51,9 @@ public class EventService : IEventService
     public async Task<Event?> GetEventAsync(Guid id, CancellationToken token)
     {
         var existingEvent = await _repository.GetEventAsync(id, token);
+
+        if(existingEvent == null)
+            throw new EventNotFoundException(id);
 
         return existingEvent;
     }
@@ -109,7 +110,7 @@ public class EventService : IEventService
         {
             errors["endAt"] = new[] { "The end date is required" };
         }
-        if (newEventData.EndAt <= newEventData.StartAt)
+        else if (newEventData.EndAt <= newEventData.StartAt)
         {
             errors["endAt"] = new[] { "The end date must be later than the start date" };
         }

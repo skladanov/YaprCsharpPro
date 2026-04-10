@@ -15,9 +15,6 @@ public class LocalEventRepository : IEventRepository
     {
         var existingEvent = _events.Where(e => e.Id == existingEventId).FirstOrDefault();
 
-        if (existingEvent == null)
-            throw new EventNotFoundException(existingEventId);
-
         return existingEvent;
     }
 
@@ -38,7 +35,10 @@ public class LocalEventRepository : IEventRepository
 
     public async Task UpdateEventAsync(EventDto newEventData, Guid existingEventId, CancellationToken token)
     {
-        var existingEvent = await GetEventAsync(existingEventId, token);
+        var existingEvent = _events.Where(e => e.Id == existingEventId).FirstOrDefault();
+
+        if (existingEvent != null)
+            throw new EventNotFoundException(existingEventId);
 
         existingEvent!.Title = newEventData.Title;
         existingEvent!.Description = newEventData.Description;
@@ -48,7 +48,10 @@ public class LocalEventRepository : IEventRepository
 
     public async Task DeleteEventAsync(Guid existingEventId, CancellationToken token)
     {
-        var existingEvent = await GetEventAsync(existingEventId, token);
+        var existingEvent = _events.Where(e => e.Id == existingEventId).FirstOrDefault();
+
+        if (existingEvent != null)
+            throw new EventNotFoundException(existingEventId);
 
         _events.Remove(existingEvent!);
     }
