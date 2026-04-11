@@ -8,7 +8,7 @@ public class ValidationException : BusinessException
         Errors = errors;
     }
 
-    public IDictionary<string, string[]> Errors { get; }
+    public IDictionary<string, string[]> Errors { get; } = new Dictionary<string, string[]>();
 
     public ValidationException(string field, string errorMessage)
         : this(new Dictionary<string, string[]>

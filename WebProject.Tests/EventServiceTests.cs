@@ -109,6 +109,7 @@ public class EventServiceTests
         var result = await _service.GetEventAsync(eventResult.Id, default);
 
         // Assert
+        Assert.NotNull(result);
         Assert.IsAssignableFrom<Event>(result);
         Assert.Equal(eventResult.Title, result.Title);
     }
@@ -214,6 +215,8 @@ public class EventServiceTests
         // Assert
         _mockRepository.Verify(r => r.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>(), default), Times.Once);
         Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
+        Assert.NotNull(result);
+        Assert.NotNull(result.Items);
         Assert.Single(result.Items);
         Assert.Contains(title, result.Items.First().Title);
     }
@@ -267,6 +270,8 @@ public class EventServiceTests
         // Assert
         _mockRepository.Verify(r => r.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>(), default), Times.Once);
         Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
+        Assert.NotNull(result);
+        Assert.NotNull(result.Items);
         Assert.Single(result.Items);
         Assert.Equal("Event In Range", result.Items.First().Title);
     }
@@ -319,6 +324,8 @@ public class EventServiceTests
         // Assert
         _mockRepository.Verify(r => r.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>(), default), Times.Once);
         Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
+        Assert.NotNull(result);
+        Assert.NotNull(result.Items);
         Assert.Single(result.Items);
         Assert.Equal(2, result.TotalPages);
         Assert.True(result.HasPreviousPage);
@@ -372,6 +379,8 @@ public class EventServiceTests
         // Assert
         _mockRepository.Verify(r => r.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>(), default), Times.Once);
         Assert.IsAssignableFrom<PaginatedResult<Event>>(result);
+        Assert.NotNull(result);
+        Assert.NotNull(result.Items);
         Assert.Single(result.Items);
         Assert.Contains(title, result.Items.First().Title);
         Assert.Equal(1, result.TotalPages);
@@ -387,7 +396,7 @@ public class EventServiceTests
         // Arrange
         var id = Guid.NewGuid();
 
-        _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync((Event)null);
+        _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync((Event?)null);
 
         // Assert
         var ex = await Assert.ThrowsAsync<EventNotFoundException>(
@@ -425,7 +434,7 @@ public class EventServiceTests
 
     // 12. создание события с некорректными данными(если валидация в сервисе)
     [Fact]
-    public async void CreateEvent_InvalidEventData_ValidationException()
+    public async Task CreateEvent_InvalidEventData_ValidationException()
     {
         // Arrange
         var eventRequest = new EventDto
@@ -446,7 +455,7 @@ public class EventServiceTests
 
     // 13. обновление события с некорректными датами(EndAt раньше StartAt)
     [Fact]
-    public async void CreateEvent_EndAtlessStartAt_ValidationException()
+    public async Task CreateEvent_EndAtlessStartAt_ValidationException()
     {
         // Arrange
         var eventRequest = new EventDto

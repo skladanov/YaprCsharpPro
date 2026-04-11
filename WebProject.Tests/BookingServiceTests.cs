@@ -34,7 +34,7 @@ public class BookingServiceTests
             EndAt = DateTime.Now.AddDays(1)
         };
 
-        Booking capturedBooking = null;
+        Booking? capturedBooking = null;
 
         _mockEventService.Setup(s => s.GetEventAsync(eventId, default)).ReturnsAsync(mockEvent);
 
@@ -120,6 +120,8 @@ public class BookingServiceTests
         var secondResult = await _service.GetBookingByIdAsync(bookingId, default);
 
         // Assert
+        Assert.NotNull(firstResult);
+        Assert.NotNull(secondResult);
         Assert.Equal(BookingStatus.Pending, firstResult.Status);
         Assert.Equal(BookingStatus.Confirmed, secondResult.Status);
         Assert.NotNull(secondResult.ProcessedAt);
@@ -159,7 +161,7 @@ public class BookingServiceTests
 
         _mockRepository
             .Setup(r => r.GetBookingByIdAsync(bookingId, default))
-            .ReturnsAsync((Booking)null);
+            .ReturnsAsync((Booking?)null);
 
         // Assert
         var ex = await Assert.ThrowsAsync<BookingNotFoundException>(
