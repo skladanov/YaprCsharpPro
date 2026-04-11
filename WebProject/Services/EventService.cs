@@ -9,9 +9,9 @@ using static System.Net.WebRequestMethods;
 public class EventService : IEventService
 {
     private readonly IEventRepository _repository;
-    private readonly ILogger _logger;
+    private readonly ILogger<EventService> _logger;
 
-    public EventService(IEventRepository repository, ILogger logger)
+    public EventService(IEventRepository repository, ILogger<EventService> logger)
     {
         _repository = repository;
         _logger = logger;
@@ -61,7 +61,10 @@ public class EventService : IEventService
         var existingEvent = await _repository.GetEventAsync(id, token);
 
         if(existingEvent == null)
+        {
+            _logger.LogWarning($"Event with ID {id} not found.");
             throw new EventNotFoundException(id);
+        }
 
         _logger.LogInformation("Successfully retrieved event with ID: {EventId}.", id);
 

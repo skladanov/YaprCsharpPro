@@ -3,6 +3,7 @@ public class BookingService : IBookingService
 {
     private readonly IBookingRepository _bookingRepositiry;
     private readonly IEventService _eventService;
+    private readonly ILogger<BookingService> _logger;
 
     public BookingService(IBookingRepository bookingRepositiry, IEventService eventService)
     {

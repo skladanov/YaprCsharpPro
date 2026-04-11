@@ -5,13 +5,13 @@ using System.Linq.Expressions;
 public class EventServiceTests
 {
     private readonly Mock<IEventRepository> _mockRepository;
-    private readonly Mock<ILogger> _mockLogger;
+    private readonly Mock<ILogger<EventService>> _mockLogger;
     private readonly IEventService _service;
 
     public EventServiceTests()
     {
         _mockRepository = new Mock<IEventRepository>();
-        _mockLogger = new Mock<ILogger>();
+        _mockLogger = new Mock<ILogger<EventService>>();
         _service = new EventService(_mockRepository.Object, _mockLogger.Object);
     }
 
