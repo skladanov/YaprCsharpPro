@@ -1,15 +1,18 @@
-﻿using Moq;
+﻿using Microsoft.Extensions.Logging;
+using Moq;
 using System.Linq.Expressions;
 
 public class EventServiceTests
 {
     private readonly Mock<IEventRepository> _mockRepository;
+    private readonly Mock<ILogger> _mockLogger;
     private readonly IEventService _service;
 
     public EventServiceTests()
     {
         _mockRepository = new Mock<IEventRepository>();
-        _service = new EventService(_mockRepository.Object);
+        _mockLogger = new Mock<ILogger>();
+        _service = new EventService(_mockRepository.Object, _mockLogger.Object);
     }
 
     // Успешные сценарии:
@@ -129,6 +132,7 @@ public class EventServiceTests
             StartAt = DateTime.Now.AddDays(2),
             EndAt = DateTime.Now.AddDays(4)
         };
+        _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(existsEvent);
 
         _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<EventDto>(), It.Is<Guid>(id => id == existsEvent.Id), default));
 
@@ -151,6 +155,8 @@ public class EventServiceTests
             StartAt = DateTime.Now,
             EndAt = DateTime.Now.AddDays(2)
         };
+
+        _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(existsEvent);
 
         _mockRepository.Setup(m => m.DeleteEventAsync(It.IsAny<Guid>(), default));
 
