@@ -1,4 +1,5 @@
-﻿using Moq;
+﻿using Microsoft.Extensions.Logging;
+using Moq;
 using System.Linq.Expressions;
 using static Booking;
 
@@ -6,13 +7,15 @@ public class BookingServiceTests
 {
     private readonly Mock<IBookingRepository> _mockRepository;
     private readonly Mock<IEventService> _mockEventService;
+    private readonly Mock<ILogger<BookingService>> _mockLogger;
     private readonly IBookingService _service;
 
     public BookingServiceTests()
     {
         _mockRepository = new Mock<IBookingRepository>();
         _mockEventService = new Mock<IEventService>();
-        _service = new BookingService(_mockRepository.Object, _mockEventService.Object);
+        _mockLogger = new Mock<ILogger<BookingService>>();
+        _service = new BookingService(_mockRepository.Object, _mockEventService.Object, _mockLogger.Object);
     }
     //Успешные сценарии:
 
@@ -27,8 +30,8 @@ public class BookingServiceTests
         {
             Id = eventId,
             Title = "Title",
-            StartAt = DateTime.Parse("2026-04-10"),
-            EndAt = DateTime.Parse("2026-04-11")
+            StartAt = DateTime.Now,
+            EndAt = DateTime.Now.AddDays(1)
         };
 
         Booking capturedBooking = null;
@@ -64,8 +67,8 @@ public class BookingServiceTests
         {
             Id = eventId,
             Title = "Title",
-            StartAt = DateTime.Parse("2026-04-10"),
-            EndAt = DateTime.Parse("2026-04-11")
+            StartAt = DateTime.Now,
+            EndAt = DateTime.Now.AddDays(1)
         };
 
         _mockEventService.Setup(s => s.GetEventAsync(eventId, default)).ReturnsAsync(mockEvent);
