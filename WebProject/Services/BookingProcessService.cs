@@ -1,11 +1,11 @@
 public class BookingProcessService : BackgroundService
 {
-    private readonly IBookingRepository _bookingRepository;
+    private readonly IBookingService _bookingService;
     private readonly ILogger<BookingProcessService> _logger;
 
-    public BookingProcessService(IBookingRepository bookingRepository, ILogger<BookingProcessService> logger)
+    public BookingProcessService(IBookingService bookingService, ILogger<BookingProcessService> logger)
     {
-        _bookingRepository = bookingRepository;
+        _bookingService = bookingService;
         _logger = logger;
     }
 
@@ -19,15 +19,14 @@ public class BookingProcessService : BackgroundService
             {
                 await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
 
-                var pendingBookings = await _bookingRepository.GetPendingBookings(stoppingToken);
+                var pendingBookings = await _bookingService.GetBookingsByStatusAsync(Booking.BookingStatus.Pending, stoppingToken);
                 if (pendingBookings?.Any() == true)
                 {
                     _logger.LogInformation($"Processing {pendingBookings.Count()} pending bookings.");
 
-                    pendingBookings.ForEach(booking =>
+                    pendingBookings.ForEach(async booking =>
                     {
-                        booking.Status = Booking.BookingStatus.Confirmed;
-                        booking.ProcessedAt = DateTime.Now;
+                        await _bookingService.BookingProcessAsync(booking, stoppingToken);
                     });
 
                     _logger.LogInformation($"Successfully processed {pendingBookings.Count()} bookings.");
