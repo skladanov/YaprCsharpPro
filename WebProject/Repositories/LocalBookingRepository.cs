@@ -1,3 +1,5 @@
+using System.Linq.Expressions;
+
 public class LocalBookingRepository : IBookingRepository
 { 
     List<Booking> _bookings = new();
@@ -13,8 +15,8 @@ public class LocalBookingRepository : IBookingRepository
         return booking;
     }
 
-    public async Task<List<Booking>?> GetPendingBookings(CancellationToken token)
+    public async Task<List<Booking>?> GetBookingsAsync(Expression<Func<Booking, bool>> predicate, CancellationToken token)
     {
-        return _bookings.AsQueryable().Where(b => b.Status == Booking.BookingStatus.Pending).ToList();
+        return _bookings.AsQueryable().Where(predicate).ToList();
     }
 }
