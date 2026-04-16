@@ -58,6 +58,7 @@ public class GlobalExceptionHandlingMiddleware
         {
             ValidationException ve => StatusCodes.Status400BadRequest,
             EventNotFoundException enfe => StatusCodes.Status404NotFound,
+            BookingNotFoundException bnfe => StatusCodes.Status404NotFound,
             _ => StatusCodes.Status500InternalServerError
         };
 }

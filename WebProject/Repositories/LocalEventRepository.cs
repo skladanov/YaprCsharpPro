@@ -1,31 +1,27 @@
 using AutoMapper;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
 public class LocalEventRepository : IEventRepository
 {
-    private readonly IMapper _mapper;
     List<Event> _events = new();
-    private int _nextId = 1;
 
-    public LocalEventRepository(IMapper mapper)
-    {
-        _mapper = mapper;
-    }
-
-    public ICollection<Event> GetAllEvents(Expression<Func<Event, bool>> predicate)
+    public async Task<ICollection<Event>> GetAllEventsAsync(Expression<Func<Event, bool>> predicate, CancellationToken token)
     {
         return _events.AsQueryable().Where(predicate).ToList();
     }
 
-    public Event? GetEvent(int id)
+    public async Task<Event?> GetEventAsync(Guid existingEventId, CancellationToken token)
     {
-        return _events.Where(e => e.Id == id).FirstOrDefault();
+        var existingEvent = _events.Where(e => e.Id == existingEventId).FirstOrDefault();
+
+        return existingEvent;
     }
 
-    public Event AddEvent(EventDto eventDto)
+    public async Task<Guid> AddEventAsync(EventDto eventDto, CancellationToken token)
     {
         Event newEventItem = new Event{
-            Id = _nextId++,
+            Id = Guid.NewGuid(),
             Title = eventDto.Title,
             Description = eventDto.Description,
             StartAt = eventDto.StartAt,
@@ -33,28 +29,30 @@ public class LocalEventRepository : IEventRepository
         };
 
         _events.Add(newEventItem);
-        return newEventItem;
+
+        return newEventItem.Id;
     }
 
-    public bool UpdateEvent(EventDto newEventData, int id)
+    public async Task UpdateEventAsync(EventDto newEventData, Guid existingEventId, CancellationToken token)
     {
-        var existingEvent = GetEvent(id);
-        if (existingEvent == null)
-            return false;
+        var existingEvent = _events.Where(e => e.Id == existingEventId).FirstOrDefault();
 
-        _mapper.Map(newEventData, existingEvent);
+        if (existingEvent != null)
+            throw new EventNotFoundException(existingEventId);
 
-        return true;
+        existingEvent!.Title = newEventData.Title;
+        existingEvent!.Description = newEventData.Description;
+        existingEvent!.StartAt = newEventData.StartAt;
+        existingEvent!.EndAt = newEventData.EndAt;
     }
 
-    public bool DeleteEvent(int id)
+    public async Task DeleteEventAsync(Guid existingEventId, CancellationToken token)
     {
-        var existingEvent = GetEvent(id);
+        var existingEvent = _events.Where(e => e.Id == existingEventId).FirstOrDefault();
 
-        if (existingEvent == null) return false;
+        if (existingEvent != null)
+            throw new EventNotFoundException(existingEventId);
 
-        _events.Remove(existingEvent);
-
-        return true;
+        _events.Remove(existingEvent!);
     }
 }

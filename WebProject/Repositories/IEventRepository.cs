@@ -2,9 +2,9 @@ using System.Linq.Expressions;
 
 public interface IEventRepository
 {
-    ICollection<Event> GetAllEvents(Expression<Func<Event, bool>> predicate);
-    Event? GetEvent(int id);
-    Event AddEvent(EventDto newEventData);
-    bool UpdateEvent(EventDto newEventData, int id);
-    bool DeleteEvent(int id);
+    Task<ICollection<Event>> GetAllEventsAsync(Expression<Func<Event, bool>> predicate, CancellationToken token);
+    Task<Event?> GetEventAsync(Guid existingEventId, CancellationToken token);
+    Task<Guid> AddEventAsync(EventDto newEventData, CancellationToken token);
+    Task UpdateEventAsync(EventDto newEventData, Guid existingEventId, CancellationToken token);
+    Task DeleteEventAsync(Guid existingEventId, CancellationToken token);
 }
