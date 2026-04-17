@@ -47,4 +47,15 @@ public class Event
 
         return true;
     }
+
+    public void ReleaseSeats(int count = 1)
+    {
+        if (count < 1)
+            throw new ArgumentException("Count of release seats must be more then zero!", nameof(count));
+
+        if (TotalSeats - (AvailableSeats + count) < 0)
+            throw new ArgumentException("Count of release seats must be more then zero!", nameof(count));
+
+        AvailableSeats += count;
+    }
 }
