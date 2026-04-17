@@ -61,19 +61,22 @@ public class EventServiceTests
                 Guid.NewGuid(),
                 "Event In Range",
                 new DateTime(2026, 4, 10),
-                new DateTime(2026, 4, 12)
+                new DateTime(2026, 4, 12),
+                10
             ),
             Event.Create(
                 Guid.NewGuid(),
                 "Event Before Range",
                 new DateTime(2026, 4, 5),
-                new DateTime(2026, 4, 6)
+                new DateTime(2026, 4, 6),
+                10
             ),
             Event.Create(
                 Guid.NewGuid(),
                 "Event After Range",
                 new DateTime(2026, 4, 20),
-                new DateTime(2026, 4, 22)
+                new DateTime(2026, 4, 22),
+                10
             )
         };
 
@@ -97,7 +100,8 @@ public class EventServiceTests
             Guid.NewGuid(),
             "Title",
             DateTime.Now,
-            DateTime.Now.AddDays(1)
+            DateTime.Now.AddDays(1),
+            10
         );
 
         _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(eventResult);
@@ -120,7 +124,8 @@ public class EventServiceTests
             Guid.NewGuid(),
             "Title",
             DateTime.Now,
-            DateTime.Now.AddDays(1)
+            DateTime.Now.AddDays(1),
+            10
         );
 
         var newEventData = new CreateEvent
@@ -149,7 +154,8 @@ public class EventServiceTests
             Guid.NewGuid(),
             "Title",
             DateTime.Now,
-            DateTime.Now.AddDays(1)
+            DateTime.Now.AddDays(1),
+            10
         );
 
         _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(existsEvent);
@@ -174,19 +180,22 @@ public class EventServiceTests
                 Guid.NewGuid(),
                 "Event In Range",
                 new DateTime(2026, 4, 10),
-                new DateTime(2026, 4, 12)
+                new DateTime(2026, 4, 12),
+                10
             ),
             Event.Create(
                 Guid.NewGuid(),
                 "Event Before Range",
                 new DateTime(2026, 4, 5),
-                new DateTime(2026, 4, 6)
+                new DateTime(2026, 4, 6),
+                10
             ),
             Event.Create(
                 Guid.NewGuid(),
                 "Event After Range",
                 new DateTime(2026, 4, 20),
-                new DateTime(2026, 4, 22)
+                new DateTime(2026, 4, 22),
+                10
             )
         };
 
@@ -225,19 +234,22 @@ public class EventServiceTests
                 Guid.NewGuid(),
                 "Event In Range",
                 new DateTime(2026, 4, 10),
-                new DateTime(2026, 4, 12)
+                new DateTime(2026, 4, 12),
+                10
             ),
             Event.Create(
                 Guid.NewGuid(),
                 "Event Before Range",
                 new DateTime(2026, 4, 5),
-                new DateTime(2026, 4, 6)
+                new DateTime(2026, 4, 6),
+                10
             ),
             Event.Create(
                 Guid.NewGuid(),
                 "Event After Range",
                 new DateTime(2026, 4, 20),
-                new DateTime(2026, 4, 22)
+                new DateTime(2026, 4, 22),
+                10
             )
         };
 
@@ -277,19 +289,22 @@ public class EventServiceTests
                 Guid.NewGuid(),
                 "Event In Range",
                 new DateTime(2026, 4, 10),
-                new DateTime(2026, 4, 12)
+                new DateTime(2026, 4, 12),
+                10
             ),
             Event.Create(
                 Guid.NewGuid(),
                 "Event Before Range",
                 new DateTime(2026, 4, 5),
-                new DateTime(2026, 4, 6)
+                new DateTime(2026, 4, 6),
+                10
             ),
             Event.Create(
                 Guid.NewGuid(),
                 "Event After Range",
                 new DateTime(2026, 4, 20),
-                new DateTime(2026, 4, 22)
+                new DateTime(2026, 4, 22),
+                10
             )
         };
 
@@ -329,19 +344,22 @@ public class EventServiceTests
                 Guid.NewGuid(),
                 "Event In Range",
                 new DateTime(2026, 4, 10),
-                new DateTime(2026, 4, 12)
+                new DateTime(2026, 4, 12),
+                10
             ),
             Event.Create(
                 Guid.NewGuid(),
                 "Event Before Range",
                 new DateTime(2026, 4, 5),
-                new DateTime(2026, 4, 6)
+                new DateTime(2026, 4, 6),
+                10
             ),
             Event.Create(
                 Guid.NewGuid(),
                 "Event After Range",
                 new DateTime(2026, 4, 20),
-                new DateTime(2026, 4, 22)
+                new DateTime(2026, 4, 22),
+                10
             )
         };
 

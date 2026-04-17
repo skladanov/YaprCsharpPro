@@ -30,7 +30,8 @@ public class BookingServiceTests
             eventId,
             "Title",
             DateTime.Now,
-            DateTime.Now.AddDays(1)
+            DateTime.Now.AddDays(1),
+            10
         );
 
         Booking? capturedBooking = null;
@@ -66,7 +67,8 @@ public class BookingServiceTests
             eventId,
             "Title",
             DateTime.Now,
-            DateTime.Now.AddDays(1)
+            DateTime.Now.AddDays(1),
+            10
         );
 
         _mockEventService.Setup(s => s.GetEventAsync(eventId, default)).ReturnsAsync(mockEvent);
