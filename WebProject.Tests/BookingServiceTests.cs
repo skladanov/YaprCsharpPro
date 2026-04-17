@@ -34,26 +34,19 @@ public class BookingServiceTests
             10
         );
 
-        Booking? capturedBooking = null;
+
+        Guid resultBookingId = Guid.NewGuid();
 
         _mockEventService.Setup(s => s.GetEventAsync(eventId, default)).ReturnsAsync(mockEvent);
 
-        _mockRepository.Setup(r => r.CreateBookingAsync(It.IsAny<Booking>(), default))
-            .Callback<Booking, CancellationToken>((booking, token) =>
-            {
-                capturedBooking = booking;
-            })
-            .Returns(Task.CompletedTask);
+        _mockRepository.Setup(r => r.CreateBookingAsync(eventId, default)).ReturnsAsync(resultBookingId);
 
         // Act
         var result = await _service.CreateBookingAsync(eventId, default);
 
         // Assert
         _mockEventService.Verify(s => s.GetEventAsync(eventId, default),Times.Once());
-        Assert.NotNull(capturedBooking);
-        Assert.Equal(capturedBooking.Id, result);
-        Assert.True(capturedBooking.CreatedAt - DateTime.Now < TimeSpan.FromSeconds(1));
-        Assert.Equal(Booking.BookingStatus.Pending, capturedBooking.Status);
+        Assert.Equal(resultBookingId, result);
     }
 
     //создание нескольких броней для одного события — все создаются с уникальными Id;
@@ -73,7 +66,7 @@ public class BookingServiceTests
 
         _mockEventService.Setup(s => s.GetEventAsync(eventId, default)).ReturnsAsync(mockEvent);
 
-        _mockRepository.Setup(r => r.CreateBookingAsync(It.IsAny<Booking>(), default)).Returns(Task.CompletedTask);
+        _mockRepository.Setup(r => r.CreateBookingAsync(eventId, default)).ReturnsAsync(It.IsAny<Guid>());
 
         // Act
         var result1 = await _service.CreateBookingAsync(eventId, default);
@@ -93,15 +86,9 @@ public class BookingServiceTests
         var bookingId = Guid.NewGuid();
         var eventId = Guid.NewGuid();
 
-        var initialBooking = new Booking
-        {
-            Id = bookingId,
-            EventId = eventId,
-            Status = Booking.BookingStatus.Pending,
-            CreatedAt = DateTime.UtcNow.AddMinutes(-10)
-        };
+        var initialBooking = Booking.Create(bookingId, eventId);
 
-        var updatedBooking = new Booking
+        var updatedBooking = Booking
         {
             Id = bookingId,
             EventId = eventId,

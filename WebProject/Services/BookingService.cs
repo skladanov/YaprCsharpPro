@@ -6,6 +6,7 @@ public class BookingService : IBookingService
     private readonly IBookingRepository _bookingRepository;
     private readonly IEventService _eventService;
     private readonly ILogger<BookingService> _logger;
+    private readonly object _bookingLock = new object();
 
     public BookingService(IBookingRepository bookingRepository, IEventService eventService, ILogger<BookingService> logger)
     {
@@ -14,25 +15,25 @@ public class BookingService : IBookingService
         _logger = logger;
     }
 
-    public async Task<Guid> CreateBookingAsync(Guid id, CancellationToken token)
+    public async Task<Guid> CreateBookingAsync(Guid eventId, CancellationToken token)
     {
-        _logger.LogInformation($"Attempting to create a booking for event with ID: {id}");
+        _logger.LogInformation($"Attempting to create a booking for event with ID: {eventId}");
 
-        await _eventService.GetEventAsync(id,  token); //Check event
+        Guid newBookingId = Guid.Empty;
 
-        Booking booking = new Booking
+        lock (_bookingLock)
         {
-            Id = Guid.NewGuid(),
-            EventId = id,
-            Status = Booking.BookingStatus.Pending,
-            CreatedAt = DateTime.UtcNow
-        };
+            Event existsEvent = _eventService.GetEventAsync(eventId, token).Result!;
 
-        await _bookingRepository.CreateBookingAsync(booking, token);
+            if (!existsEvent.TryReserveSeats())
+                throw new NoAvailableSeatsException(eventId);
 
-        _logger.LogInformation($"Successfully created booking with ID {booking.Id} for event {id}.");
+            newBookingId = _bookingRepository.CreateBookingAsync(eventId, token).Result;
+        }
 
-        return booking.Id;
+        _logger.LogInformation($"Successfully created booking with ID {newBookingId} for event {eventId}.");
+
+        return newBookingId;
     }
 
     public async Task<Booking?> GetBookingByIdAsync(Guid bookingId, CancellationToken token)
@@ -66,18 +67,17 @@ public class BookingService : IBookingService
     {
         try
         {
-            booking.Status = Booking.BookingStatus.Confirmed;
-            booking.ProcessedAt = DateTime.Now;
+            booking.Confirm();
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
-            booking.Status = Booking.BookingStatus.Rejected;
+            booking.Reject();
             _logger.LogInformation("Booking process service is stopping due to cancellation request.");
             return;
         }
         catch (Exception ex)
         {
-            booking.Status = Booking.BookingStatus.Rejected;
+            booking.Reject();
             _logger.LogError(ex, $"An error occurred while processing bookings: {ex.Message}");
             return;
         }
