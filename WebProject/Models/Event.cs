@@ -6,11 +6,13 @@ public class Event
 
     public static Event Create(Guid id, string title, DateTime startAt, DateTime endAt, int totalSeats, string? description = null)
     {
-        if (id == Guid.Empty) { throw new ArgumentNullException("ID cannot be null or empty!", nameof(id)); }
+        if (id == Guid.Empty) { throw new ValidationException("ID cannot be null or empty!", nameof(id)); }
 
-        if (String.IsNullOrWhiteSpace(title)) { throw new ArgumentNullException("Title cannot be null or empty!", nameof(title)); }
+        if (String.IsNullOrWhiteSpace(title)) { throw new ValidationException("Title cannot be null or empty!", nameof(title)); }
 
-        if (startAt >= endAt) { throw new ArgumentException("Start date must be before end date", nameof(startAt)); }
+        if (startAt >= endAt) { throw new ValidationException("Start date must be before end date", nameof(startAt)); }
+
+        if (totalSeats < 0) { throw new ValidationException("Start date must be before end date", nameof(startAt)); }
 
         return new Event()
         {
