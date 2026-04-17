@@ -26,13 +26,12 @@ public class BookingServiceTests
         // Arrange
         var eventId = Guid.NewGuid();
 
-        Event mockEvent = new Event
-        {
-            Id = eventId,
-            Title = "Title",
-            StartAt = DateTime.Now,
-            EndAt = DateTime.Now.AddDays(1)
-        };
+        Event mockEvent = Event.Create(
+            eventId,
+            "Title",
+            DateTime.Now,
+            DateTime.Now.AddDays(1)
+        );
 
         Booking? capturedBooking = null;
 
@@ -63,13 +62,12 @@ public class BookingServiceTests
         // Arrange
         var eventId = Guid.NewGuid();
 
-        Event mockEvent = new Event
-        {
-            Id = eventId,
-            Title = "Title",
-            StartAt = DateTime.Now,
-            EndAt = DateTime.Now.AddDays(1)
-        };
+        Event mockEvent = Event.Create(
+            eventId,
+            "Title",
+            DateTime.Now,
+            DateTime.Now.AddDays(1)
+        );
 
         _mockEventService.Setup(s => s.GetEventAsync(eventId, default)).ReturnsAsync(mockEvent);
 

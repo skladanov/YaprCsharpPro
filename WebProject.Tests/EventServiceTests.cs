@@ -57,27 +57,24 @@ public class EventServiceTests
         // Arrange
         var testEvents = new List<Event>
         {
-            new Event
-            {
-                Id = Guid.NewGuid(),
-                Title = "Event In Range",
-                StartAt = new DateTime(2026, 4, 10),
-                EndAt = new DateTime(2026, 4, 12)
-            },
-            new Event
-            {
-                Id = Guid.NewGuid(),
-                Title = "Event Before Range",
-                StartAt = new DateTime(2026, 4, 5),
-                EndAt = new DateTime(2026, 4, 6)
-            },
-            new Event
-            {
-                Id = Guid.NewGuid(),
-                Title = "Event After Range",
-                StartAt = new DateTime(2026, 4, 20),
-                EndAt = new DateTime(2026, 4, 22)
-            }
+            Event.Create( 
+                Guid.NewGuid(),
+                "Event In Range",
+                new DateTime(2026, 4, 10),
+                new DateTime(2026, 4, 12)
+            ),
+            Event.Create(
+                Guid.NewGuid(),
+                "Event Before Range",
+                new DateTime(2026, 4, 5),
+                new DateTime(2026, 4, 6)
+            ),
+            Event.Create(
+                Guid.NewGuid(),
+                "Event After Range",
+                new DateTime(2026, 4, 20),
+                new DateTime(2026, 4, 22)
+            )
         };
 
         _mockRepository.Setup(m => m.GetAllEventsAsync(It.IsAny<Expression<Func<Event, bool>>>(), default)).ReturnsAsync((testEvents.ToList()));
@@ -96,13 +93,13 @@ public class EventServiceTests
     public async Task GetEventById_Succeeds()
     {
         // Arrange
-        var eventResult = new Event
-        {
-            Id = Guid.NewGuid(),
-            Title = "TitleString",
-            StartAt = DateTime.Now,
-            EndAt = DateTime.Now.AddDays(1)
-        };
+        Event eventResult = Event.Create(
+            Guid.NewGuid(),
+            "Title",
+            DateTime.Now,
+            DateTime.Now.AddDays(1)
+        );
+
         _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(eventResult);
 
         // Act
@@ -119,13 +116,12 @@ public class EventServiceTests
     public async Task UpdateExistingEvent_Succeeds()
     {
         // Arrange
-        var existsEvent = new Event
-        {
-            Id = Guid.NewGuid(),
-            Title = "TitleString",
-            StartAt = DateTime.Now,
-            EndAt = DateTime.Now.AddDays(2)
-        };
+        Event existsEvent = Event.Create(
+            Guid.NewGuid(),
+            "Title",
+            DateTime.Now,
+            DateTime.Now.AddDays(1)
+        );
 
         var newEventData = new EventDto
         {
@@ -149,13 +145,12 @@ public class EventServiceTests
     public async Task DeleteExistingEvent_Succeeds()
     {
         // Arrange
-        var existsEvent = new Event
-        {
-            Id = Guid.NewGuid(),
-            Title = "TitleString",
-            StartAt = DateTime.Now,
-            EndAt = DateTime.Now.AddDays(2)
-        };
+        Event existsEvent = Event.Create(
+            Guid.NewGuid(),
+            "Title",
+            DateTime.Now,
+            DateTime.Now.AddDays(1)
+        );
 
         _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(existsEvent);
 
@@ -175,28 +170,26 @@ public class EventServiceTests
         // Arrange
         var testEvents = new List<Event>
         {
-            new Event
-            {
-                Id = Guid.NewGuid(),
-                Title = "Event In Range",
-                StartAt = DateTime.Now,
-                EndAt = DateTime.Now.AddDays(2),
-            },
-            new Event
-            {
-                Id = Guid.NewGuid(),
-                Title = "Event Before Range",
-                StartAt = DateTime.Now.AddDays(1),
-                EndAt = DateTime.Now.AddDays(2)
-            },
-            new Event
-            {
-                Id = Guid.NewGuid(),
-                Title = "Event After Range",
-                StartAt = DateTime.Now.AddDays(1),
-                EndAt = DateTime.Now.AddDays(2)
-            }
+            Event.Create(
+                Guid.NewGuid(),
+                "Event In Range",
+                new DateTime(2026, 4, 10),
+                new DateTime(2026, 4, 12)
+            ),
+            Event.Create(
+                Guid.NewGuid(),
+                "Event Before Range",
+                new DateTime(2026, 4, 5),
+                new DateTime(2026, 4, 6)
+            ),
+            Event.Create(
+                Guid.NewGuid(),
+                "Event After Range",
+                new DateTime(2026, 4, 20),
+                new DateTime(2026, 4, 22)
+            )
         };
+
         string title = "Event In";
         DateTime? from = null;
         DateTime? to = null;
@@ -228,27 +221,24 @@ public class EventServiceTests
         // Arrange
         var testEvents = new List<Event>
         {
-            new Event
-            {
-                Id = Guid.NewGuid(),
-                Title = "Event In Range",
-                StartAt = new DateTime(2026, 4, 10),
-                EndAt = new DateTime(2026, 4, 12)
-            },
-            new Event
-            {
-                Id = Guid.NewGuid(),
-                Title = "Event Before Range",
-                StartAt = new DateTime(2026, 4, 5),
-                EndAt = new DateTime(2026, 4, 6)
-            },
-            new Event
-            {
-                Id = Guid.NewGuid(),
-                Title = "Event After Range",
-                StartAt = new DateTime(2026, 4, 20),
-                EndAt = new DateTime(2026, 4, 22)
-            }
+            Event.Create(
+                Guid.NewGuid(),
+                "Event In Range",
+                new DateTime(2026, 4, 10),
+                new DateTime(2026, 4, 12)
+            ),
+            Event.Create(
+                Guid.NewGuid(),
+                "Event Before Range",
+                new DateTime(2026, 4, 5),
+                new DateTime(2026, 4, 6)
+            ),
+            Event.Create(
+                Guid.NewGuid(),
+                "Event After Range",
+                new DateTime(2026, 4, 20),
+                new DateTime(2026, 4, 22)
+            )
         };
 
         string title = "Event In";
@@ -283,27 +273,24 @@ public class EventServiceTests
         // Arrange
         var testEvents = new List<Event>
         {
-            new Event
-            {
-                Id = Guid.NewGuid(),
-                Title = "Event In Range",
-                StartAt = new DateTime(2026, 4, 10),
-                EndAt = new DateTime(2026, 4, 12)
-            },
-            new Event
-            {
-                Id = Guid.NewGuid(),
-                Title = "Event Before Range",
-                StartAt = new DateTime(2026, 4, 5),
-                EndAt = new DateTime(2026, 4, 6)
-            },
-            new Event
-            {
-                Id = Guid.NewGuid(),
-                Title = "Event After Range",
-                StartAt = new DateTime(2026, 4, 20),
-                EndAt = new DateTime(2026, 4, 22)
-            }
+            Event.Create(
+                Guid.NewGuid(),
+                "Event In Range",
+                new DateTime(2026, 4, 10),
+                new DateTime(2026, 4, 12)
+            ),
+            Event.Create(
+                Guid.NewGuid(),
+                "Event Before Range",
+                new DateTime(2026, 4, 5),
+                new DateTime(2026, 4, 6)
+            ),
+            Event.Create(
+                Guid.NewGuid(),
+                "Event After Range",
+                new DateTime(2026, 4, 20),
+                new DateTime(2026, 4, 22)
+            )
         };
 
         string? title = null;
@@ -338,27 +325,24 @@ public class EventServiceTests
         // Arrange
         var testEvents = new List<Event>
         {
-            new Event
-            {
-                Id = Guid.NewGuid(),
-                Title = "Event In Range",
-                StartAt = new DateTime(2026, 4, 10),
-                EndAt = new DateTime(2026, 4, 12)
-            },
-            new Event
-            {
-                Id = Guid.NewGuid(),
-                Title = "Event Before Range",
-                StartAt = new DateTime(2026, 4, 5),
-                EndAt = new DateTime(2026, 4, 6)
-            },
-            new Event
-            {
-                Id = Guid.NewGuid(),
-                Title = "Event After Range",
-                StartAt = new DateTime(2026, 4, 20),
-                EndAt = new DateTime(2026, 4, 22)
-            }
+            Event.Create(
+                Guid.NewGuid(),
+                "Event In Range",
+                new DateTime(2026, 4, 10),
+                new DateTime(2026, 4, 12)
+            ),
+            Event.Create(
+                Guid.NewGuid(),
+                "Event Before Range",
+                new DateTime(2026, 4, 5),
+                new DateTime(2026, 4, 6)
+            ),
+            Event.Create(
+                Guid.NewGuid(),
+                "Event After Range",
+                new DateTime(2026, 4, 20),
+                new DateTime(2026, 4, 22)
+            )
         };
 
         string title = "Event In";

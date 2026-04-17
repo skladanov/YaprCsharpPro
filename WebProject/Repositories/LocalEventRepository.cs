@@ -20,13 +20,13 @@ public class LocalEventRepository : IEventRepository
 
     public async Task<Guid> AddEventAsync(EventDto eventDto, CancellationToken token)
     {
-        Event newEventItem = new Event{
-            Id = Guid.NewGuid(),
-            Title = eventDto.Title,
-            Description = eventDto.Description,
-            StartAt = eventDto.StartAt,
-            EndAt = eventDto.EndAt
-        };
+        Event newEventItem = Event.Create(
+            Guid.NewGuid(),
+            eventDto.Title,
+            eventDto.StartAt,
+            eventDto.EndAt,
+            eventDto.Description
+        );
 
         _events.Add(newEventItem);
 
