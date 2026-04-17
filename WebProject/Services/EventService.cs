@@ -71,7 +71,7 @@ public class EventService : IEventService
         return existingEvent;
     }
 
-    public async Task<Guid> AddEventAsync(EventDto newEventData, CancellationToken token)
+    public async Task<Guid> AddEventAsync(CreateEvent newEventData, CancellationToken token)
     {
         _logger.LogInformation($"Attempting to add a new event with: Title='{newEventData.Title}', Description='{newEventData.Description}', StartAt='{newEventData.StartAt}', EndAt='{newEventData.EndAt}'");
 
@@ -84,7 +84,7 @@ public class EventService : IEventService
         return newEventId;
     }
 
-    public async Task UpdateEventAsync(EventDto newEventData, Guid id, CancellationToken token)
+    public async Task UpdateEventAsync(CreateEvent newEventData, Guid id, CancellationToken token)
     {
         _logger.LogInformation($"Attempting to update event with ID='{id}' and new data: Title='{newEventData.Title}', Description='{newEventData.Description}', StartAt='{newEventData.StartAt}', EndAt='{newEventData.EndAt}'");
 
@@ -108,7 +108,7 @@ public class EventService : IEventService
         _logger.LogInformation("Successfully remove event with ID: {EventId}.", id);
     }
 
-    private void ValidateRequestEvent(EventDto newEventData)
+    private void ValidateRequestEvent(CreateEvent newEventData)
     {
         if (newEventData == null)
         {

@@ -22,7 +22,7 @@ public class EventServiceTests
     public async Task CreateEvent_Succeeds()
     {
         // Arrange
-        var eventRequest = new EventDto
+        var eventRequest = new CreateEvent
         {
             Title = "TitleString",
             StartAt = DateTime.Now,
@@ -32,7 +32,7 @@ public class EventServiceTests
         var resultEventId = Guid.NewGuid();
 
         _mockRepository
-            .Setup(m => m.AddEventAsync(It.IsAny<EventDto>(), It.IsAny<CancellationToken>()))
+            .Setup(m => m.AddEventAsync(It.IsAny<CreateEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(resultEventId);
 
         // Act
@@ -41,7 +41,7 @@ public class EventServiceTests
         // Assert
         _mockRepository.Verify(
             r => r.AddEventAsync(
-                It.IsAny<EventDto>(),
+                It.IsAny<CreateEvent>(),
                 It.IsAny<CancellationToken>()
             ),
             Times.Once
@@ -123,7 +123,7 @@ public class EventServiceTests
             DateTime.Now.AddDays(1)
         );
 
-        var newEventData = new EventDto
+        var newEventData = new CreateEvent
         {
             Title = "UpdatedTitle",
             StartAt = DateTime.Now.AddDays(2),
@@ -131,7 +131,7 @@ public class EventServiceTests
         };
         _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(existsEvent);
 
-        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<EventDto>(), It.Is<Guid>(id => id == existsEvent.Id), default));
+        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<CreateEvent>(), It.Is<Guid>(id => id == existsEvent.Id), default));
 
         // Act
         await _service.UpdateEventAsync(newEventData, existsEvent.Id, default);
@@ -396,7 +396,7 @@ public class EventServiceTests
     public async Task UpdateEventById_nonExistentevent_ThrowsEventNotFoundException()
     {
         // Arrange
-        var newEventData = new EventDto
+        var newEventData = new CreateEvent
         {
             Title = "UpdatedTitle",
             StartAt = DateTime.Parse("2026-04-10"),
@@ -405,7 +405,7 @@ public class EventServiceTests
 
         var id = Guid.NewGuid();
 
-        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<EventDto>(), It.IsAny<Guid>(), default));
+        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<CreateEvent>(), It.IsAny<Guid>(), default));
 
         // Assert
         var ex = await Assert.ThrowsAsync<EventNotFoundException>(
@@ -421,12 +421,12 @@ public class EventServiceTests
     public async Task CreateEvent_InvalidEventData_ValidationException()
     {
         // Arrange
-        var eventRequest = new EventDto
+        var eventRequest = new CreateEvent
         {
             Title = ""
         };
 
-        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<EventDto>(), default));
+        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<CreateEvent>(), default));
 
         // Assert
         var ex = await Assert.ThrowsAsync<ValidationException>(
@@ -442,14 +442,14 @@ public class EventServiceTests
     public async Task CreateEvent_EndAtlessStartAt_ValidationException()
     {
         // Arrange
-        var eventRequest = new EventDto
+        var eventRequest = new CreateEvent
         {
             Title = "TitleString",
             StartAt = DateTime.Now,
             EndAt = DateTime.Now - TimeSpan.FromDays(1)
         };
 
-        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<EventDto>(), default));
+        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<CreateEvent>(), default));
 
         // Assert
         var ex = await Assert.ThrowsAsync<ValidationException>(

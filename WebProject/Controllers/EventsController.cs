@@ -51,7 +51,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Event>> AddEvent([FromBody] EventDto newEventData, CancellationToken token)
+    public async Task<ActionResult<Event>> AddEvent([FromBody] CreateEvent newEventData, CancellationToken token)
     {
         var newEventId = await _eventService.AddEventAsync(newEventData, token);
 
@@ -63,7 +63,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpPut("{id:Guid}")]
-    public async Task<IActionResult> UpdateEvent([FromBody] EventDto newEventData, Guid id, CancellationToken token)
+    public async Task<IActionResult> UpdateEvent([FromBody] CreateEvent newEventData, Guid id, CancellationToken token)
     {
         await _eventService.UpdateEventAsync(newEventData, id, token);
 

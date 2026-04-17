@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-public class EventDto
+public class CreateEvent
 {
     [Required]
     public required string Title { get; set; }

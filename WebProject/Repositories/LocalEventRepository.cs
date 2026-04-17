@@ -18,13 +18,14 @@ public class LocalEventRepository : IEventRepository
         return existingEvent;
     }
 
-    public async Task<Guid> AddEventAsync(EventDto eventDto, CancellationToken token)
+    public async Task<Guid> AddEventAsync(CreateEvent eventDto, CancellationToken token)
     {
         Event newEventItem = Event.Create(
             Guid.NewGuid(),
             eventDto.Title,
             eventDto.StartAt,
             eventDto.EndAt,
+            eventDto.TotalSeats,
             eventDto.Description
         );
 
@@ -33,7 +34,7 @@ public class LocalEventRepository : IEventRepository
         return newEventItem.Id;
     }
 
-    public async Task UpdateEventAsync(EventDto newEventData, Guid existingEventId, CancellationToken token)
+    public async Task UpdateEventAsync(CreateEvent newEventData, Guid existingEventId, CancellationToken token)
     {
         var existingEvent = _events.Where(e => e.Id == existingEventId).FirstOrDefault();
 
