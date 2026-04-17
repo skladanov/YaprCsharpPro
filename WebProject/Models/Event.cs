@@ -4,15 +4,23 @@ public class Event
 {
     private Event() { }
 
-    public static Event Create(Guid id, string title, DateTime startAt, DateTime endAt, string? description = null)
+    public static Event Create(Guid id, string title, DateTime startAt, DateTime endAt, int totalSeats, string? description = null)
     {
+        if (id == Guid.Empty) { throw new ArgumentNullException("ID cannot be null or empty!", nameof(id)); }
+
+        if (String.IsNullOrWhiteSpace(title)) { throw new ArgumentNullException("Title cannot be null or empty!", nameof(title)); }
+
+        if (startAt >= endAt) { throw new ArgumentException("Start date must be before end date", nameof(startAt)); }
+
         return new Event()
         {
             Id = id,
             Title = title,
             Description = description,
             StartAt = startAt,
-            EndAt = endAt
+            EndAt = endAt,
+            TotalSeats = totalSeats,
+            AvailableSeats = totalSeats
         };
      }
 
@@ -25,4 +33,7 @@ public class Event
     public DateTime StartAt { get; set; }
     [Required]
     public DateTime EndAt { get; set; }
+    [Required]
+    public int TotalSeats {  get; private set; }
+    public int AvailableSeats {  get; private set; }
 }
