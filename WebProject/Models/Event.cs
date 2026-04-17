@@ -36,4 +36,15 @@ public class Event
     [Required]
     public int TotalSeats {  get; private set; }
     public int AvailableSeats {  get; private set; }
+
+    public bool TryReserveSeats(int count = 1)
+    {
+        if (count < 1) 
+            throw new ArgumentException("Count of reserve seats must be more then zero!", nameof(count));
+        if (count > AvailableSeats) return false; 
+
+        AvailableSeats -= count;
+
+        return true;
+    }
 }
