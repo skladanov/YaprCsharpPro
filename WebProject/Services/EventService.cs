@@ -54,7 +54,7 @@ public class EventService : IEventService
         };
     }
 
-    public async Task<Event?> GetEventAsync(Guid id, CancellationToken token)
+    public async Task<Event> GetEventAsync(Guid id, CancellationToken token)
     {
         _logger.LogInformation("Attempting to retrieve event with ID: {EventId}", id);
 

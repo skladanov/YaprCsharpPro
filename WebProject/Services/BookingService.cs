@@ -20,16 +20,21 @@ public class BookingService : IBookingService
         _logger.LogInformation($"Attempting to create a booking for event with ID: {eventId}");
 
         Guid newBookingId = Guid.Empty;
+        
+        Event existsEvent = await _eventService.GetEventAsync(eventId, token);
+
+        bool isReserved;
 
         lock (_bookingLock)
         {
-            Event existsEvent = _eventService.GetEventAsync(eventId, token).Result!;
-
-            if (!existsEvent.TryReserveSeats())
-                throw new NoAvailableSeatsException(eventId);
-
-            newBookingId = _bookingRepository.CreateBookingAsync(eventId, token).Result;
+            isReserved = existsEvent.TryReserveSeats();
         }
+
+        if(!isReserved)
+            throw new NoAvailableSeatsException(eventId);
+
+        newBookingId = _bookingRepository.CreateBookingAsync(eventId, token).Result;
+        
 
         _logger.LogInformation($"Successfully created booking with ID {newBookingId} for event {eventId}.");
 
