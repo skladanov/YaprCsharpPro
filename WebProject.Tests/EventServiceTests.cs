@@ -131,9 +131,8 @@ public class EventServiceTests
             EndAt = DateTime.Now.AddDays(4)
         };
 
-        _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(existsEvent);
 
-        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<Event>(), default));
+        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<Event>(), default)).ReturnsAsync(true);
 
         // Act
         await _service.UpdateEventAsync(newEventData, existsEvent.Id, default);
@@ -155,9 +154,7 @@ public class EventServiceTests
             10
         );
 
-        _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(existsEvent);
-
-        _mockRepository.Setup(m => m.DeleteEventAsync(It.IsAny<Guid>(), default));
+        _mockRepository.Setup(m => m.DeleteEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(true);
 
         // Act
         await _service.DeleteEventAsync(existsEvent.Id, default);

@@ -104,7 +104,10 @@ public class EventService : IEventService
             newEventData.Description
         );
 
-        await _repository.UpdateEventAsync(updatedEventItem, token);
+        var result = await _repository.UpdateEventAsync(updatedEventItem, token);
+
+        if (!result)
+            throw new EventNotFoundException(id);
 
         _logger.LogInformation("Successfully updated event with ID: {EventId}.", id);
     }
@@ -113,9 +116,10 @@ public class EventService : IEventService
     {
         _logger.LogInformation($"Attempting to delete event with ID='{id}'");
 
-        await GetEventAsync(id, token); // Check event
+        var result = await _repository.DeleteEventAsync(id, token);
 
-        await _repository.DeleteEventAsync(id, token);
+        if (!result)
+            throw new EventNotFoundException(id);
 
         _logger.LogInformation("Successfully remove event with ID: {EventId}.", id);
     }

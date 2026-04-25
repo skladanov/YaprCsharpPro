@@ -6,14 +6,14 @@ using static Booking;
 public class BookingServiceTests
 {
     private readonly Mock<IBookingRepository> _mockRepository;
-    private readonly Mock<IEventService> _mockEventService;
+    private readonly Mock<IEventRepository> _mockEventService;
     private readonly Mock<ILogger<BookingService>> _mockLogger;
     private readonly IBookingService _service;
 
     public BookingServiceTests()
     {
         _mockRepository = new Mock<IBookingRepository>();
-        _mockEventService = new Mock<IEventService>();
+        _mockEventService = new Mock<IEventRepository>();
         _mockLogger = new Mock<ILogger<BookingService>>();
         _service = new BookingService(_mockRepository.Object, _mockEventService.Object, _mockLogger.Object);
     }

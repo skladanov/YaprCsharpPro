@@ -18,23 +18,31 @@ public class LocalEventRepository : IEventRepository
         return existingEvent;
     }
 
-    public async Task AddEventAsync(Event eventItem, CancellationToken token)
+    public async Task<Guid> AddEventAsync(Event eventItem, CancellationToken token)
     {
         _events.Add(eventItem);
+        return eventItem.Id;
     }
 
-    public async Task UpdateEventAsync(Event eventItem, CancellationToken token)
+    public async Task<bool> UpdateEventAsync(Event eventItem, CancellationToken token)
     {
+        var existingEvent = _events.Where(e => e.Id == eventItem.Id).FirstOrDefault();
 
+        if (existingEvent == null) return false;
+
+        existingEvent = eventItem;
+
+        return true;
     }
 
-    public async Task DeleteEventAsync(Guid existingEventId, CancellationToken token)
+    public async Task<bool> DeleteEventAsync(Guid existingEventId, CancellationToken token)
     {
         var existingEvent = _events.Where(e => e.Id == existingEventId).FirstOrDefault();
 
-        if (existingEvent != null)
-            throw new EventNotFoundException(existingEventId);
+        if (existingEvent == null) return false;
 
         _events.Remove(existingEvent!);
+
+        return true;
     }
 }
