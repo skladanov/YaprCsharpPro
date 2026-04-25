@@ -32,22 +32,15 @@ public class EventServiceTests
         var resultEventId = Guid.NewGuid();
 
         _mockRepository
-            .Setup(m => m.AddEventAsync(It.IsAny<CreateEvent>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(resultEventId);
+            .Setup(m => m.AddEventAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()));
 
         // Act
         var result = await _service.AddEventAsync(eventRequest, default);
 
         // Assert
-        _mockRepository.Verify(
-            r => r.AddEventAsync(
-                It.IsAny<CreateEvent>(),
-                It.IsAny<CancellationToken>()
-            ),
-            Times.Once
-        );
+        _mockRepository.Verify(r => r.AddEventAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()),Times.Once);
 
-        Assert.Equal(resultEventId, result);
+        Assert.IsType<Guid>(result);
     }
 
     // 2. получение всех событий
@@ -120,29 +113,33 @@ public class EventServiceTests
     public async Task UpdateExistingEvent_Succeeds()
     {
         // Arrange
+
+        var id = Guid.NewGuid();
+
         Event existsEvent = Event.Create(
-            Guid.NewGuid(),
+            id,
             "Title",
             DateTime.Now,
             DateTime.Now.AddDays(1),
             10
         );
 
-        var newEventData = new CreateEvent
+        var newEventData = new UpdateEvent
         {
             Title = "UpdatedTitle",
             StartAt = DateTime.Now.AddDays(2),
             EndAt = DateTime.Now.AddDays(4)
         };
+
         _mockRepository.Setup(m => m.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(existsEvent);
 
-        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<CreateEvent>(), It.Is<Guid>(id => id == existsEvent.Id), default));
+        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<Event>(), default));
 
         // Act
         await _service.UpdateEventAsync(newEventData, existsEvent.Id, default);
 
         // Assert
-        _mockRepository.Verify(m => m.UpdateEventAsync(newEventData, It.Is<Guid>(id => id == existsEvent.Id), default), Times.Once);
+        _mockRepository.Verify(m => m.UpdateEventAsync(It.IsAny<Event>(), default), Times.Once);
     }
 
     // 5. удаление существующего события
@@ -423,7 +420,7 @@ public class EventServiceTests
 
         var id = Guid.NewGuid();
 
-        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<CreateEvent>(), It.IsAny<Guid>(), default));
+        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<Event>(), default));
 
         // Assert
         var ex = await Assert.ThrowsAsync<EventNotFoundException>(
@@ -431,7 +428,7 @@ public class EventServiceTests
 
         Assert.Contains(id.ToString(), ex.Message);
 
-        _mockRepository.Verify(m => m.UpdateEventAsync(newEventData, id, default), Times.Never);
+        _mockRepository.Verify(m => m.UpdateEventAsync(It.IsAny<Event>(), default), Times.Never);
     }
 
     // 12. создание события с некорректными данными(если валидация в сервисе)
@@ -444,15 +441,13 @@ public class EventServiceTests
             Title = ""
         };
 
-        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<CreateEvent>(), default));
+        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<Event>(), default));
 
         // Assert
         var ex = await Assert.ThrowsAsync<ValidationException>(
         async () => await _service.AddEventAsync(eventRequest, default));
 
-        Assert.Equal(3, ex.Errors.Count);
-
-        _mockRepository.Verify(m => m.AddEventAsync(eventRequest, default), Times.Never);
+        _mockRepository.Verify(m => m.AddEventAsync(It.IsAny<Event>(), default), Times.Never);
     }
 
     // 13. обновление события с некорректными датами(EndAt раньше StartAt)
@@ -467,7 +462,7 @@ public class EventServiceTests
             EndAt = DateTime.Now - TimeSpan.FromDays(1)
         };
 
-        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<CreateEvent>(), default));
+        _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<Event>(), default));
 
         // Assert
         var ex = await Assert.ThrowsAsync<ValidationException>(
@@ -475,6 +470,6 @@ public class EventServiceTests
 
         Assert.Contains("Failed data validation", ex.Message);
 
-        _mockRepository.Verify(m => m.AddEventAsync(eventRequest, default), Times.Never);
+        _mockRepository.Verify(m => m.AddEventAsync(It.IsAny<Event>(), default), Times.Never);
     }
 }

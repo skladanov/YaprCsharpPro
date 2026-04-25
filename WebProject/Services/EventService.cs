@@ -95,16 +95,16 @@ public class EventService : IEventService
     {
         _logger.LogInformation($"Attempting to update event with ID='{id}' and new data: Title='{newEventData.Title}', Description='{newEventData.Description}', StartAt='{newEventData.StartAt}', EndAt='{newEventData.EndAt}'");
 
-        //ValidateRequestEvent(newEventData);
+        Event updatedEventItem = Event.Create(
+            id,
+            newEventData.Title,
+            newEventData.StartAt,
+            newEventData.EndAt,
+            newEventData.TotalSeats,
+            newEventData.Description
+        );
 
-        Event existsEvent = await GetEventAsync(id, token); // Check event
-
-        existsEvent.Title = newEventData.Title;
-        existsEvent.Description = newEventData.Description;
-        existsEvent.StartAt = newEventData.StartAt;
-        existsEvent.EndAt = newEventData.EndAt;
-
-        await _repository.UpdateEventAsync(existsEvent, token);
+        await _repository.UpdateEventAsync(updatedEventItem, token);
 
         _logger.LogInformation("Successfully updated event with ID: {EventId}.", id);
     }
@@ -118,50 +118,5 @@ public class EventService : IEventService
         await _repository.DeleteEventAsync(id, token);
 
         _logger.LogInformation("Successfully remove event with ID: {EventId}.", id);
-    }
-
-    private void ValidateRequestEvent(CreateEvent newEventData)
-    {
-        if (newEventData == null)
-        {
-            _logger.LogError("Request body is empty.");
-            throw new ValidationException("", "Request body is empty");
-        }
-
-        var errors = new Dictionary<string, string[]>();
-
-        if (string.IsNullOrWhiteSpace(newEventData.Title))
-        {
-            errors["title"] = new[] { "Title is requaried" };
-            _logger.LogWarning("Validation error: Title is required.");
-        }
-
-        if (newEventData.StartAt == default)
-        {
-            errors["startAt"] = new[] { "The start date is required" };
-            _logger.LogWarning("Validation error: The start date is required.");
-        }
-        else if (newEventData.StartAt < DateTime.UtcNow)
-        {
-            errors["startAt"] = new[] { "The start date cannot be in the past" };
-            _logger.LogWarning("Validation error: The start date cannot be in the past.");
-        }
-
-        if (newEventData.EndAt == default)
-        {
-            errors["endAt"] = new[] { "The end date is required" };
-            _logger.LogWarning("Validation error: The end date is required.");
-        }
-        else if (newEventData.EndAt <= newEventData.StartAt)
-        {
-            errors["endAt"] = new[] { "The end date must be later than the start date" };
-            _logger.LogWarning("Validation error: The end date must be later than the start date.");
-        }
-
-        if (errors.Count > 0)
-        {
-            _logger.LogError("Validation failed with {ErrorCount} errors.", errors.Count);
-            throw new ValidationException(errors);
-        }
     }
 }
