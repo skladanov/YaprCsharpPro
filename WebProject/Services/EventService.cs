@@ -75,24 +75,36 @@ public class EventService : IEventService
     {
         _logger.LogInformation($"Attempting to add a new event with: Title='{newEventData.Title}', Description='{newEventData.Description}', StartAt='{newEventData.StartAt}', EndAt='{newEventData.EndAt}'");
 
-        ValidateRequestEvent(newEventData);
+        Event newEventItem = Event.Create(
+            Guid.NewGuid(),
+            newEventData.Title,
+            newEventData.StartAt,
+            newEventData.EndAt,
+            newEventData.TotalSeats,
+            newEventData.Description
+        );
 
-        var newEventId = await _repository.AddEventAsync(newEventData, token);
+        await _repository.AddEventAsync(newEventItem, token);
 
-        _logger.LogInformation("Successfully added new event with ID: {EventId}.", newEventId);
+        _logger.LogInformation("Successfully added new event with ID: {EventId}.", newEventItem.Id);
 
-        return newEventId;
+        return newEventItem.Id;
     }
 
-    public async Task UpdateEventAsync(CreateEvent newEventData, Guid id, CancellationToken token)
+    public async Task UpdateEventAsync(UpdateEvent newEventData, Guid id, CancellationToken token)
     {
         _logger.LogInformation($"Attempting to update event with ID='{id}' and new data: Title='{newEventData.Title}', Description='{newEventData.Description}', StartAt='{newEventData.StartAt}', EndAt='{newEventData.EndAt}'");
 
-        ValidateRequestEvent(newEventData);
+        //ValidateRequestEvent(newEventData);
 
-        await GetEventAsync(id, token); // Check event
+        Event existsEvent = await GetEventAsync(id, token); // Check event
 
-        await _repository.UpdateEventAsync(newEventData, id, token);
+        existsEvent.Title = newEventData.Title;
+        existsEvent.Description = newEventData.Description;
+        existsEvent.StartAt = newEventData.StartAt;
+        existsEvent.EndAt = newEventData.EndAt;
+
+        await _repository.UpdateEventAsync(existsEvent, token);
 
         _logger.LogInformation("Successfully updated event with ID: {EventId}.", id);
     }

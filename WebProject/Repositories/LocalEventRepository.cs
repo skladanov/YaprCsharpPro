@@ -11,40 +11,21 @@ public class LocalEventRepository : IEventRepository
         return _events.AsQueryable().Where(predicate).ToList();
     }
 
-    public async Task<Event?> GetEventAsync(Guid existingEventId, CancellationToken token)
+    public async Task<Event?> GetEventAsync(Guid eventId, CancellationToken token)
     {
-        var existingEvent = _events.Where(e => e.Id == existingEventId).FirstOrDefault();
+        var existingEvent = _events.Where(e => e.Id == eventId).FirstOrDefault();
 
         return existingEvent;
     }
 
-    public async Task<Guid> AddEventAsync(CreateEvent eventDto, CancellationToken token)
+    public async Task AddEventAsync(Event eventItem, CancellationToken token)
     {
-        Event newEventItem = Event.Create(
-            Guid.NewGuid(),
-            eventDto.Title,
-            eventDto.StartAt,
-            eventDto.EndAt,
-            eventDto.TotalSeats,
-            eventDto.Description
-        );
-
-        _events.Add(newEventItem);
-
-        return newEventItem.Id;
+        _events.Add(eventItem);
     }
 
-    public async Task UpdateEventAsync(CreateEvent newEventData, Guid existingEventId, CancellationToken token)
+    public async Task UpdateEventAsync(Event eventItem, CancellationToken token)
     {
-        var existingEvent = _events.Where(e => e.Id == existingEventId).FirstOrDefault();
 
-        if (existingEvent != null)
-            throw new EventNotFoundException(existingEventId);
-
-        existingEvent!.Title = newEventData.Title;
-        existingEvent!.Description = newEventData.Description;
-        existingEvent!.StartAt = newEventData.StartAt;
-        existingEvent!.EndAt = newEventData.EndAt;
     }
 
     public async Task DeleteEventAsync(Guid existingEventId, CancellationToken token)
