@@ -9,4 +9,5 @@ public class UpdateEvent
     public DateTime StartAt { get; set; }
     [Required]
     public DateTime EndAt { get; set; }
+    public int TotalSeats { get; set; }
 }

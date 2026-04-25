@@ -63,7 +63,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpPut("{id:Guid}")]
-    public async Task<IActionResult> UpdateEvent([FromBody] CreateEvent newEventData, Guid id, CancellationToken token)
+    public async Task<IActionResult> UpdateEvent([FromBody] UpdateEvent newEventData, Guid id, CancellationToken token)
     {
         await _eventService.UpdateEventAsync(newEventData, id, token);
 
