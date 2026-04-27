@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddSingleton<IEventService, EventService>();
-builder.Services.AddSingleton<IBookingService, BookingService>();
+builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddSingleton<IEventRepository, LocalEventRepository>();
 builder.Services.AddSingleton<IBookingRepository, LocalBookingRepository>();
 builder.Services.AddHostedService<BookingProcessService>();
