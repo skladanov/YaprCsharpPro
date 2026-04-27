@@ -1,8 +1,8 @@
 ﻿public class NoAvailableSeatsException : BusinessException
 {
     public NoAvailableSeatsException()
-        : base("Event not found") { }
+        : base("Event has no available seats") { }
 
     public NoAvailableSeatsException(Guid eventId)
-        : base($"Event with ID {eventId} not found") { }
+        : base($"Event with ID {eventId} has no available seats") { }
 }
