@@ -18,16 +18,21 @@ public class BookingProcessService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var pendingBookings = await GetPendingsAsync(stoppingToken);
+            await ExecuteBookingProcessForTestsAsync(stoppingToken);
+        }
+    }
 
-            if (pendingBookings?.Any() == true)
-            {
-                _logger.LogInformation($"Processing {pendingBookings.Count()} pending bookings.");
+    public async Task ExecuteBookingProcessForTestsAsync(CancellationToken stoppingToken)
+    {
+        var pendingBookings = await GetPendingsAsync(stoppingToken);
 
-                var tasks = pendingBookings.Select(booking => BookingProcessAsync(booking, stoppingToken));
+        if (pendingBookings?.Any() == true)
+        {
+            _logger.LogInformation($"Processing {pendingBookings.Count()} pending bookings.");
 
-                await Task.WhenAll(tasks);
-            }
+            var tasks = pendingBookings.Select(booking => BookingProcessAsync(booking, stoppingToken));
+
+            await Task.WhenAll(tasks);
         }
     }
 
@@ -89,5 +94,4 @@ public class BookingProcessService : BackgroundService
             return result;
         }
     }
-
 }
