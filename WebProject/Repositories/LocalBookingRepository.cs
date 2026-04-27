@@ -25,4 +25,15 @@ public class LocalBookingRepository : IBookingRepository
     {
         return _bookings.AsQueryable().Where(predicate).ToList();
     }
+
+    public async Task<bool> UpdateBookingAsync(Booking updatedBooking, CancellationToken token)
+    {
+        var booking = _bookings.FirstOrDefault(b => b.Id == updatedBooking.Id);
+
+        if (booking == null)
+            return false;
+
+        booking = updatedBooking;
+        return true;
+    }
 }

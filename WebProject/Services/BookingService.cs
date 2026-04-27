@@ -4,14 +4,14 @@ using System.Linq.Expressions;
 public class BookingService : IBookingService
 {
     private readonly IBookingRepository _bookingRepository;
-    private readonly IEventService _eventService;
+    private readonly IEventRepository _eventRepository;
     private readonly ILogger<BookingService> _logger;
     private readonly object _bookingLock = new object();
 
-    public BookingService(IBookingRepository bookingRepository, IEventService eventService, ILogger<BookingService> logger)
+    public BookingService(IBookingRepository bookingRepository, IEventRepository eventRepository, ILogger<BookingService> logger)
     {
         _bookingRepository = bookingRepository;
-        _eventService = eventService;
+        _eventRepository = eventRepository;
         _logger = logger;
     }
 
@@ -21,7 +21,12 @@ public class BookingService : IBookingService
 
         Guid newBookingId = Guid.Empty;
         
-        Event existsEvent = await _eventService.GetEventAsync(eventId, token);
+        Event? existsEvent = await _eventRepository.GetEventAsync(eventId, token);
+
+        if (existsEvent == null)
+            throw new EventNotFoundException(eventId);
+
+        _logger.LogDebug($"Event with ID: {eventId} was found");
 
         bool isReserved;
 
@@ -33,8 +38,14 @@ public class BookingService : IBookingService
         if(!isReserved)
             throw new NoAvailableSeatsException(eventId);
 
-        newBookingId = _bookingRepository.CreateBookingAsync(eventId, token).Result;
-        
+        var result = await _eventRepository.UpdateEventAsync(existsEvent, token);
+
+        if (!result)
+            throw new EventNotFoundException(eventId);
+
+        _logger.LogDebug($"Event with ID: {eventId} was updated");
+
+        newBookingId = await _bookingRepository.CreateBookingAsync(eventId, token);
 
         _logger.LogInformation($"Successfully created booking with ID {newBookingId} for event {eventId}.");
 
@@ -56,37 +67,5 @@ public class BookingService : IBookingService
         _logger.LogInformation("Successfully retrieved booking with ID: {BookingId}.", bookingId);
 
         return booking;
-    }
-
-    public async Task<List<Booking>?> GetBookingsByStatusAsync(Booking.BookingStatus status, CancellationToken stoppingToken)
-    {
-        Expression<Func<Booking, bool>> predicate = e =>
-            (e.Status == status);
-
-        var result = await _bookingRepository.GetBookingsAsync(predicate, stoppingToken);
-
-        return result;
-    }
-
-    public async Task BookingProcessAsync(Booking booking, CancellationToken stoppingToken)
-    {
-        try
-        {
-            booking.Confirm();
-        }
-        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-        {
-            booking.Reject();
-            _logger.LogInformation("Booking process service is stopping due to cancellation request.");
-            return;
-        }
-        catch (Exception ex)
-        {
-            booking.Reject();
-            _logger.LogError(ex, $"An error occurred while processing bookings: {ex.Message}");
-            return;
-        }
-
-        _logger.LogInformation($"Successfully processed bookings with ID: {booking.Id}.");
     }
 }
