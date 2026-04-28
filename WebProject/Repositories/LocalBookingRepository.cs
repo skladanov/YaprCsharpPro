@@ -4,15 +4,10 @@ public class LocalBookingRepository : IBookingRepository
 { 
     List<Booking> _bookings = new();
 
-    public async Task<Guid> CreateBookingAsync(Guid eventId, CancellationToken token)
+    public async Task<Guid> CreateBookingAsync(Booking newBooking, CancellationToken token)
     {
-        var bookingId = Guid.NewGuid();
-
-        var newBooking = Booking.Create(bookingId, eventId);
-
         _bookings.Add(newBooking);
-
-        return bookingId;
+        return newBooking.Id;
     }
 
     public async Task<Booking?> GetBookingByIdAsync(Guid bookingId, CancellationToken token)
