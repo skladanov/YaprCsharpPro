@@ -22,27 +22,27 @@ public class BookingService : IBookingService
 
         Guid newBookingId = Guid.Empty;
         
-        Event? existsEvent = await _eventRepository.GetEventAsync(eventId, token);
-
-        if (existsEvent == null)
-            throw new EventNotFoundException(eventId);
-
-        _logger.LogDebug($"Event with ID: {eventId} was found");
+       
 
         bool isReserved;
 
         lock (_bookingLock)
         {
+            Event? existsEvent = _eventRepository.GetEventAsync(eventId, token).Result;
+
+            if (existsEvent == null)
+                throw new EventNotFoundException(eventId);
+
             isReserved = existsEvent.TryReserveSeats();
+
+            if (!isReserved)
+                throw new NoAvailableSeatsException(eventId);
+
+            bool result = _eventRepository.UpdateEventAsync(existsEvent, token).Result;
+
+            if (!result)
+                throw new EventNotFoundException(eventId);
         }
-
-        if(!isReserved)
-            throw new NoAvailableSeatsException(eventId);
-
-        var result = await _eventRepository.UpdateEventAsync(existsEvent, token);
-
-        if (!result)
-            throw new EventNotFoundException(eventId);
 
         _logger.LogDebug($"Event with ID: {eventId} was updated");
 

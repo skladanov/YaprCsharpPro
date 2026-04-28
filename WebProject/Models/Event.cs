@@ -4,7 +4,7 @@ public class Event
 {
     private Event() { }
 
-    public static Event Create(Guid id, string title, DateTime startAt, DateTime endAt, int totalSeats, string? description = null)
+    public static Event Create(Guid id, string title, DateTime startAt, DateTime endAt, int? totalSeats, string? description = null)
     {
         if (id == Guid.Empty) { throw new ValidationException("ID cannot be null or empty!", nameof(id)); }
 
@@ -12,7 +12,9 @@ public class Event
 
         if (startAt >= endAt) { throw new ValidationException("Start date must be before end date", nameof(startAt)); }
 
-        if (totalSeats < 0) { throw new ValidationException("Start date must be before end date", nameof(startAt)); }
+        if (totalSeats == null) { throw new ValidationException("TotalSeats cannot be null or empty!", nameof(totalSeats)); }
+
+        if (totalSeats < 1) { throw new ValidationException("TotalSeats must be more than zero!", nameof(totalSeats)); }
 
         return new Event()
         {
@@ -36,8 +38,8 @@ public class Event
     [Required]
     public DateTime EndAt { get; set; }
     [Required]
-    public int TotalSeats {  get; private set; }
-    public int AvailableSeats {  get; private set; }
+    public int? TotalSeats {  get; private set; }
+    public int? AvailableSeats {  get; private set; }
 
     public bool TryReserveSeats(int count = 1)
     {

@@ -36,7 +36,7 @@ public class BookingServiceTests
             10
         );
 
-        int availableSeatsBefore = mockEvent.AvailableSeats;
+        int? availableSeatsBefore = mockEvent.AvailableSeats;
 
         Guid expectedBookingId = Guid.NewGuid();
 
@@ -218,12 +218,14 @@ public class BookingServiceTests
         _mockBookingRepository.Setup(r => r.CreateBookingAsync(It.IsAny<Booking>(), default));
 
         // Assert
-        var ex = await Assert.ThrowsAsync<EventNotFoundException>(
+        var ex = await Assert.ThrowsAsync<AggregateException>(
             async () => await _service.CreateBookingAsync(eventId, default));
 
         _mockEventRepository.Verify(s => s.GetEventAsync(eventId, default), Times.Once());
         _mockEventRepository.Verify(s => s.UpdateEventAsync(It.IsAny<Event>(), default), Times.Never);
         _mockBookingRepository.Verify(r => r.CreateBookingAsync(It.IsAny<Booking>(), default), Times.Never());
+
+        Assert.IsType<EventNotFoundException>(ex.InnerException);
     }
 
 
@@ -257,15 +259,16 @@ public class BookingServiceTests
             "Title",
             DateTime.Now,
             DateTime.Now.AddDays(1),
-            0
+            1
         );
+
+        mockEvent.TryReserveSeats();
 
         _mockEventRepository.Setup(s => s.GetEventAsync(eventId, default)).ReturnsAsync(mockEvent);
         _mockEventRepository.Setup(s => s.UpdateEventAsync(mockEvent, default)).ReturnsAsync(true);
         _mockBookingRepository.Setup(r => r.CreateBookingAsync(It.IsAny<Booking>(), default)).ReturnsAsync(() => Guid.NewGuid());
 
         // Act
-
         var ex = await Assert.ThrowsAsync<NoAvailableSeatsException>(
            async () => await _service.CreateBookingAsync(eventId, default));
 

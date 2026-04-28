@@ -26,7 +26,8 @@ public class EventServiceTests
         {
             Title = "TitleString",
             StartAt = DateTime.Now,
-            EndAt = DateTime.Now + TimeSpan.FromDays(1)
+            EndAt = DateTime.Now + TimeSpan.FromDays(1),
+            TotalSeats = 10
         };
 
         var resultEventId = Guid.NewGuid();
@@ -128,7 +129,8 @@ public class EventServiceTests
         {
             Title = "UpdatedTitle",
             StartAt = DateTime.Now.AddDays(2),
-            EndAt = DateTime.Now.AddDays(4)
+            EndAt = DateTime.Now.AddDays(4),
+            TotalSeats =  5
         };
 
 
