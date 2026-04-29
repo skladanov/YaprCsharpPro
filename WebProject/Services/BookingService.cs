@@ -128,10 +128,19 @@ public class BookingService : IBookingService
         await _bookingRepository.UpdateBookingAsync(booking, CancellationToken.None);
 
         if (eventItem == null)
-            throw new EventNotFoundException();
+        {
+            _logger.LogWarning("Probably booking was rejected, because event not found");
+
+            return;
+        }
 
         eventItem.ReleaseSeats();
 
-        await _eventRepository.UpdateEventAsync(eventItem, CancellationToken.None);
+        bool isEventUpdated = await _eventRepository.UpdateEventAsync(eventItem, CancellationToken.None);
+
+        if (!isEventUpdated)
+        {
+            _logger.LogError($"An error occurred while release seats");
+        }
     }
 }
