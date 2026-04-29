@@ -20,11 +20,11 @@ public class BookingService : IBookingService
     {
         _logger.LogInformation($"Attempting to create a booking for event with ID: {eventId}");
 
-        Guid newBookingId = Guid.Empty;
-        
-       
+        var newBookingId = Guid.Empty;
 
-        bool isReserved;
+        var bookingId = Guid.NewGuid();
+
+        var newBooking = Booking.Create(bookingId, eventId);
 
         lock (_bookingLock)
         {
@@ -33,7 +33,7 @@ public class BookingService : IBookingService
             if (existsEvent == null)
                 throw new EventNotFoundException(eventId);
 
-            isReserved = existsEvent.TryReserveSeats();
+            bool isReserved = existsEvent.TryReserveSeats();
 
             if (!isReserved)
                 throw new NoAvailableSeatsException(eventId);
@@ -42,15 +42,9 @@ public class BookingService : IBookingService
 
             if (!result)
                 throw new EventNotFoundException(eventId);
+
+            newBookingId = _bookingRepository.CreateBookingAsync(newBooking, token).Result;
         }
-
-        _logger.LogDebug($"Event with ID: {eventId} was updated");
-
-        var bookingId = Guid.NewGuid();
-
-        var newBooking = Booking.Create(bookingId, eventId);
-
-        newBookingId = await _bookingRepository.CreateBookingAsync(newBooking, token);
 
         _logger.LogInformation($"Successfully created booking with ID {newBookingId} for event {eventId}.");
 
@@ -79,20 +73,11 @@ public class BookingService : IBookingService
         await _processingSemaphore.WaitAsync();
 
         Event? eventItem = null;
+
         try
         {
             eventItem = await _eventRepository.GetEventAsync(booking.EventId, default);
-        }
-        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-        {
-            _logger.LogInformation("Booking process service is stopping due to cancellation request.");
-        }
 
-        if (eventItem == null)
-            throw new EventNotFoundException(booking.Id);
-
-        try
-        {
             await Confirm(booking, stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -134,13 +119,16 @@ public class BookingService : IBookingService
         await _bookingRepository.UpdateBookingAsync(booking, stoppingToken);
     }
 
-    public async Task Reject(Booking booking, Event eventItem)
+    public async Task Reject(Booking booking, Event? eventItem)
     {
         await Task.Delay(TimeSpan.FromSeconds(2));
 
         booking.Reject();
 
         await _bookingRepository.UpdateBookingAsync(booking, CancellationToken.None);
+
+        if (eventItem == null)
+            throw new EventNotFoundException();
 
         eventItem.ReleaseSeats();
 
