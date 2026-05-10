@@ -11,48 +11,38 @@ public class LocalEventRepository : IEventRepository
         return _events.AsQueryable().Where(predicate).ToList();
     }
 
-    public async Task<Event?> GetEventAsync(Guid existingEventId, CancellationToken token)
+    public async Task<Event?> GetEventAsync(Guid eventId, CancellationToken token)
     {
-        var existingEvent = _events.Where(e => e.Id == existingEventId).FirstOrDefault();
+        var existingEvent = _events.Where(e => e.Id == eventId).FirstOrDefault();
 
         return existingEvent;
     }
 
-    public async Task<Guid> AddEventAsync(EventDto eventDto, CancellationToken token)
+    public async Task<Guid> AddEventAsync(Event eventItem, CancellationToken token)
     {
-        Event newEventItem = new Event{
-            Id = Guid.NewGuid(),
-            Title = eventDto.Title,
-            Description = eventDto.Description,
-            StartAt = eventDto.StartAt,
-            EndAt = eventDto.EndAt
-        };
-
-        _events.Add(newEventItem);
-
-        return newEventItem.Id;
+        _events.Add(eventItem);
+        return eventItem.Id;
     }
 
-    public async Task UpdateEventAsync(EventDto newEventData, Guid existingEventId, CancellationToken token)
+    public async Task<bool> UpdateEventAsync(Event eventItem, CancellationToken token)
+    {
+        var existingEvent = _events.Where(e => e.Id == eventItem.Id).FirstOrDefault();
+
+        if (existingEvent == null) return false;
+
+        existingEvent = eventItem;
+
+        return true;
+    }
+
+    public async Task<bool> DeleteEventAsync(Guid existingEventId, CancellationToken token)
     {
         var existingEvent = _events.Where(e => e.Id == existingEventId).FirstOrDefault();
 
-        if (existingEvent != null)
-            throw new EventNotFoundException(existingEventId);
-
-        existingEvent!.Title = newEventData.Title;
-        existingEvent!.Description = newEventData.Description;
-        existingEvent!.StartAt = newEventData.StartAt;
-        existingEvent!.EndAt = newEventData.EndAt;
-    }
-
-    public async Task DeleteEventAsync(Guid existingEventId, CancellationToken token)
-    {
-        var existingEvent = _events.Where(e => e.Id == existingEventId).FirstOrDefault();
-
-        if (existingEvent != null)
-            throw new EventNotFoundException(existingEventId);
+        if (existingEvent == null) return false;
 
         _events.Remove(existingEvent!);
+
+        return true;
     }
 }

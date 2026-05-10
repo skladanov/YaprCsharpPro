@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-public class EventDto
+public class CreateEvent
 {
     [Required]
     public required string Title { get; set; }
@@ -9,4 +9,5 @@ public class EventDto
     public DateTime StartAt { get; set; }
     [Required]
     public DateTime EndAt { get; set; }
+    public int? TotalSeats {  get; set; }
 }

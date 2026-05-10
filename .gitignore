@@ -1,0 +1,11 @@
+﻿################################################################################
+# Данный GITIGNORE-файл был автоматически создан Microsoft(R) Visual Studio.
+################################################################################
+
+/WebProject/bin/Debug/net10.0
+/.vs
+/WebProject/.vs/WebProject
+/WebProject/obj
+/WebProject.Tests/obj
+/WebProject.Tests/bin/Debug/net10.0
+/WebProject/.vs

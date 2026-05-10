@@ -54,7 +54,7 @@ public class EventService : IEventService
         };
     }
 
-    public async Task<Event?> GetEventAsync(Guid id, CancellationToken token)
+    public async Task<Event> GetEventAsync(Guid id, CancellationToken token)
     {
         _logger.LogInformation("Attempting to retrieve event with ID: {EventId}", id);
 
@@ -71,28 +71,43 @@ public class EventService : IEventService
         return existingEvent;
     }
 
-    public async Task<Guid> AddEventAsync(EventDto newEventData, CancellationToken token)
+    public async Task<Guid> AddEventAsync(CreateEvent newEventData, CancellationToken token)
     {
         _logger.LogInformation($"Attempting to add a new event with: Title='{newEventData.Title}', Description='{newEventData.Description}', StartAt='{newEventData.StartAt}', EndAt='{newEventData.EndAt}'");
 
-        ValidateRequestEvent(newEventData);
+        Event newEventItem = Event.Create(
+            Guid.NewGuid(),
+            newEventData.Title,
+            newEventData.StartAt,
+            newEventData.EndAt,
+            newEventData.TotalSeats,
+            newEventData.Description
+        );
 
-        var newEventId = await _repository.AddEventAsync(newEventData, token);
+        await _repository.AddEventAsync(newEventItem, token);
 
-        _logger.LogInformation("Successfully added new event with ID: {EventId}.", newEventId);
+        _logger.LogInformation("Successfully added new event with ID: {EventId}.", newEventItem.Id);
 
-        return newEventId;
+        return newEventItem.Id;
     }
 
-    public async Task UpdateEventAsync(EventDto newEventData, Guid id, CancellationToken token)
+    public async Task UpdateEventAsync(UpdateEvent newEventData, Guid id, CancellationToken token)
     {
         _logger.LogInformation($"Attempting to update event with ID='{id}' and new data: Title='{newEventData.Title}', Description='{newEventData.Description}', StartAt='{newEventData.StartAt}', EndAt='{newEventData.EndAt}'");
 
-        ValidateRequestEvent(newEventData);
+        Event updatedEventItem = Event.Create(
+            id,
+            newEventData.Title,
+            newEventData.StartAt,
+            newEventData.EndAt,
+            newEventData.TotalSeats,
+            newEventData.Description
+        );
 
-        await GetEventAsync(id, token); // Check event
+        var result = await _repository.UpdateEventAsync(updatedEventItem, token);
 
-        await _repository.UpdateEventAsync(newEventData, id, token);
+        if (!result)
+            throw new EventNotFoundException(id);
 
         _logger.LogInformation("Successfully updated event with ID: {EventId}.", id);
     }
@@ -101,55 +116,11 @@ public class EventService : IEventService
     {
         _logger.LogInformation($"Attempting to delete event with ID='{id}'");
 
-        await GetEventAsync(id, token); // Check event
+        var result = await _repository.DeleteEventAsync(id, token);
 
-        await _repository.DeleteEventAsync(id, token);
+        if (!result)
+            throw new EventNotFoundException(id);
 
         _logger.LogInformation("Successfully remove event with ID: {EventId}.", id);
-    }
-
-    private void ValidateRequestEvent(EventDto newEventData)
-    {
-        if (newEventData == null)
-        {
-            _logger.LogError("Request body is empty.");
-            throw new ValidationException("", "Request body is empty");
-        }
-
-        var errors = new Dictionary<string, string[]>();
-
-        if (string.IsNullOrWhiteSpace(newEventData.Title))
-        {
-            errors["title"] = new[] { "Title is requaried" };
-            _logger.LogWarning("Validation error: Title is required.");
-        }
-
-        if (newEventData.StartAt == default)
-        {
-            errors["startAt"] = new[] { "The start date is required" };
-            _logger.LogWarning("Validation error: The start date is required.");
-        }
-        else if (newEventData.StartAt < DateTime.UtcNow)
-        {
-            errors["startAt"] = new[] { "The start date cannot be in the past" };
-            _logger.LogWarning("Validation error: The start date cannot be in the past.");
-        }
-
-        if (newEventData.EndAt == default)
-        {
-            errors["endAt"] = new[] { "The end date is required" };
-            _logger.LogWarning("Validation error: The end date is required.");
-        }
-        else if (newEventData.EndAt <= newEventData.StartAt)
-        {
-            errors["endAt"] = new[] { "The end date must be later than the start date" };
-            _logger.LogWarning("Validation error: The end date must be later than the start date.");
-        }
-
-        if (errors.Count > 0)
-        {
-            _logger.LogError("Validation failed with {ErrorCount} errors.", errors.Count);
-            throw new ValidationException(errors);
-        }
     }
 }

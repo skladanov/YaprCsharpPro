@@ -4,14 +4,14 @@ using System.ComponentModel.DataAnnotations;
 public class GlobalExceptionHandlingMiddleware
 {
     private readonly RequestDelegate _next;
-    //private readonly ILogger<GlobalExceptionHandlingMiddleware> _logger;
+    private readonly ILogger<GlobalExceptionHandlingMiddleware> _logger;
 
     public GlobalExceptionHandlingMiddleware(
         RequestDelegate next,
         ILogger<GlobalExceptionHandlingMiddleware> logger)
     {
         _next = next;
-        //_logger = logger;
+        _logger = logger;
     }
 
     public async Task InvokeAsync(HttpContext httpContext)
@@ -28,11 +28,11 @@ public class GlobalExceptionHandlingMiddleware
 
     private async Task HandleException(HttpContext httpContext, Exception ex)
     {
-        //_logger.LogError(
-        //    ex,
-        //    "Unhandled exception. Method={Method}, Path={Path}",
-        //    httpContext.Request.Method,
-        //    httpContext.Request.Path);
+        _logger.LogError(
+            ex,
+            "Unhandled exception. Method={Method}, Path={Path}",
+            httpContext.Request.Method,
+            httpContext.Request.Path);
 
         if (httpContext.Response.HasStarted)
         {
@@ -59,6 +59,7 @@ public class GlobalExceptionHandlingMiddleware
             ValidationException ve => StatusCodes.Status400BadRequest,
             EventNotFoundException enfe => StatusCodes.Status404NotFound,
             BookingNotFoundException bnfe => StatusCodes.Status404NotFound,
+            NoAvailableSeatsException nase => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status500InternalServerError
         };
 }

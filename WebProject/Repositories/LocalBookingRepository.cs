@@ -4,9 +4,10 @@ public class LocalBookingRepository : IBookingRepository
 { 
     List<Booking> _bookings = new();
 
-    public async Task CreateBookingAsync(Booking booking, CancellationToken token)
+    public async Task<Guid> CreateBookingAsync(Booking newBooking, CancellationToken token)
     {
-        _bookings.Add(booking);
+        _bookings.Add(newBooking);
+        return newBooking.Id;
     }
 
     public async Task<Booking?> GetBookingByIdAsync(Guid bookingId, CancellationToken token)
@@ -18,5 +19,16 @@ public class LocalBookingRepository : IBookingRepository
     public async Task<List<Booking>?> GetBookingsAsync(Expression<Func<Booking, bool>> predicate, CancellationToken token)
     {
         return _bookings.AsQueryable().Where(predicate).ToList();
+    }
+
+    public async Task<bool> UpdateBookingAsync(Booking updatedBooking, CancellationToken token)
+    {
+        var booking = _bookings.FirstOrDefault(b => b.Id == updatedBooking.Id);
+
+        if (booking == null)
+            return false;
+
+        booking = updatedBooking;
+        return true;
     }
 }

@@ -1,11 +1,13 @@
+using System.Linq.Expressions;
+
 public class BookingProcessService : BackgroundService
 {
-    private readonly IBookingService _bookingService;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ILogger<BookingProcessService> _logger;
 
-    public BookingProcessService(IBookingService bookingService, ILogger<BookingProcessService> logger)
+    public BookingProcessService(IServiceScopeFactory serviceScopeFactory, ILogger<BookingProcessService> logger)
     {
-        _bookingService = bookingService;
+        _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
     }
 
@@ -15,35 +17,22 @@ public class BookingProcessService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            try
-            {
-                await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
 
-                var pendingBookings = await _bookingService.GetBookingsByStatusAsync(Booking.BookingStatus.Pending, stoppingToken);
+            using (var scope = _serviceScopeFactory.CreateScope())
+            {
+                var _bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+
+                var pendingBookings = await _bookingService.GetPendingsAsync(stoppingToken);
+
+
                 if (pendingBookings?.Any() == true)
                 {
                     _logger.LogInformation($"Processing {pendingBookings.Count()} pending bookings.");
 
-                    pendingBookings.ForEach(async booking =>
-                    {
-                        await _bookingService.BookingProcessAsync(booking, stoppingToken);
-                    });
+                    var tasks = pendingBookings.Select(booking => _bookingService.BookingProcessAsync(booking, stoppingToken));
 
-                    _logger.LogInformation($"Successfully processed {pendingBookings.Count()} bookings.");
+                    await Task.WhenAll(tasks);
                 }
-                else
-                {
-                    _logger.LogDebug("No pending bookings found. Checking again in 2 seconds.");
-                }
-            }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-            {
-                _logger.LogInformation("Booking process service is stopping due to cancellation request.");
-                break;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An error occurred while processing bookings: {ErrorMessage}", ex.Message);
             }
         }
     }
