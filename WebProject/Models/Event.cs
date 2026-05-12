@@ -2,6 +2,15 @@ using System.ComponentModel.DataAnnotations;
 
 public class Event
 {
+    public Guid Id { get; init; }
+    public required string Title { get; set; }
+    public string? Description { get; set; }
+    public DateTime StartAt { get; set; }
+    public DateTime EndAt { get; set; }
+    public int? TotalSeats {  get; private set; }
+    public int? AvailableSeats {  get; private set; }
+    public ICollection<Booking> Bookings { get; private set; } = null!;
+    
     private Event() { }
 
     public static Event Create(Guid id, string title, DateTime startAt, DateTime endAt, int? totalSeats, string? description = null)
@@ -27,19 +36,6 @@ public class Event
             AvailableSeats = totalSeats
         };
      }
-
-    [Required]
-    public Guid Id { get; init; }
-    [Required]
-    public required string Title { get; set; }
-    public string? Description { get; set; }
-    [Required]
-    public DateTime StartAt { get; set; }
-    [Required]
-    public DateTime EndAt { get; set; }
-    [Required]
-    public int? TotalSeats {  get; private set; }
-    public int? AvailableSeats {  get; private set; }
 
     public bool TryReserveSeats(int count = 1)
     {
