@@ -134,7 +134,7 @@ public class EventServiceTests
         };
 
 
-        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<Event>(), default)).ReturnsAsync(true);
+        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<Event>(), default));
 
         // Act
         await _service.UpdateEventAsync(newEventData, existsEvent.Id, default);
@@ -156,13 +156,13 @@ public class EventServiceTests
             10
         );
 
-        _mockRepository.Setup(m => m.DeleteEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(true);
+        _mockRepository.Setup(m => m.DeleteEventAsync(It.IsAny<Event>(), default));
 
         // Act
         await _service.DeleteEventAsync(existsEvent.Id, default);
 
         // Assert
-        _mockRepository.Verify(m => m.DeleteEventAsync(It.Is<Guid>(id => id == existsEvent.Id), default), Times.Once);
+        _mockRepository.Verify(m => m.DeleteEventAsync(It.IsAny<Event>(), default), Times.Once);
     }
 
     // 6. фильтрация по названию

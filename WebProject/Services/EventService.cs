@@ -61,10 +61,7 @@ public class EventService : IEventService
         var existingEvent = await _repository.GetEventAsync(id, token);
 
         if(existingEvent == null)
-        {
-            _logger.LogWarning($"Event with ID {id} not found.");
             throw new EventNotFoundException(id);
-        }
 
         _logger.LogInformation("Successfully retrieved event with ID: {EventId}.", id);
 
@@ -94,33 +91,28 @@ public class EventService : IEventService
     public async Task UpdateEventAsync(UpdateEvent newEventData, Guid id, CancellationToken token)
     {
         _logger.LogInformation($"Attempting to update event with ID='{id}' and new data: Title='{newEventData.Title}', Description='{newEventData.Description}', StartAt='{newEventData.StartAt}', EndAt='{newEventData.EndAt}'");
-
-        Event updatedEventItem = Event.Create(
-            id,
-            newEventData.Title,
-            newEventData.StartAt,
-            newEventData.EndAt,
-            newEventData.TotalSeats,
-            newEventData.Description
-        );
-
-        var result = await _repository.UpdateEventAsync(updatedEventItem, token);
-
-        if (!result)
+        var @event = await _repository.GetEventAsync(id, token);
+        if (@event == null)
             throw new EventNotFoundException(id);
 
+
+        @event.Title = newEventData.Title;
+        @event.Description = newEventData.Description;
+        @event.StartAt = newEventData.StartAt;
+        @event.EndAt = newEventData.EndAt;
+
+        await _repository.UpdateEventAsync(@event, token);
         _logger.LogInformation("Successfully updated event with ID: {EventId}.", id);
     }
 
     public async Task DeleteEventAsync(Guid id, CancellationToken token)
     {
         _logger.LogInformation($"Attempting to delete event with ID='{id}'");
-
-        var result = await _repository.DeleteEventAsync(id, token);
-
-        if (!result)
+        var @event = await _repository.GetEventAsync(id, token);
+        if (@event != null)
             throw new EventNotFoundException(id);
 
+        await _repository.DeleteEventAsync(@event, token);
         _logger.LogInformation("Successfully remove event with ID: {EventId}.", id);
     }
 }
