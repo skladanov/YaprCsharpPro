@@ -23,7 +23,7 @@ public class EventService : IEventService
 
         Expression<Func<Event, bool>> predicate = e =>
         (string.IsNullOrEmpty(title) ||
-            e.Title.Contains(title, StringComparison.OrdinalIgnoreCase)) &&
+            e.Title.Contains(title)) &&
         (!from.HasValue || e.StartAt >= from.Value) &&
         (!to.HasValue || e.EndAt <= to.Value);
 
