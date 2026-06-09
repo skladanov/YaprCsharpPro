@@ -20,8 +20,6 @@ public class BookingService : IBookingService
     {
         _logger.LogInformation($"Attempting to create a booking for event with ID: {eventId}");
 
-        var newBookingId = Guid.Empty;
-
         var bookingId = Guid.NewGuid();
 
         var newBooking = Booking.Create(bookingId, eventId);
@@ -48,16 +46,12 @@ public class BookingService : IBookingService
         {
             _logger.LogInformation("Booking process service is stopping due to cancellation request.");
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"An error occurred while processing bookings: {ex.Message}");
-        }
         finally
         {
             _processingSemaphore.Release();
         }
 
-        _logger.LogInformation($"Successfully created booking with ID {newBookingId} for event {eventId}.");
+        _logger.LogInformation($"Successfully created booking with ID {bookingId} for event {eventId}.");
 
         return newBooking.Id;
     }
