@@ -25,14 +25,14 @@ public class Booking
             Id = id,
             EventId = eventId,
             Status = BookingStatus.Pending,
-            CreatedAt = DateTime.Now
+            CreatedAt = DateTime.UtcNow
         };
     }
 
     public void Confirm()
     {
         Status = BookingStatus.Confirmed;
-        ProcessedAt = DateTime.Now;
+        ProcessedAt = DateTime.UtcNow;
     }
 
     public void Reject()
