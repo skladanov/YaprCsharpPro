@@ -133,7 +133,7 @@ public class EventServiceTests
             TotalSeats =  5
         };
 
-
+        _mockRepository.Setup(m => m.GetEventAsync(id, default)).ReturnsAsync(existsEvent);
         _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<Event>(), default));
 
         // Act
