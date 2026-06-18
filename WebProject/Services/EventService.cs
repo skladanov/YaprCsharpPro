@@ -109,7 +109,7 @@ public class EventService : IEventService
     {
         _logger.LogInformation($"Attempting to delete event with ID='{id}'");
         var @event = await _repository.GetEventAsync(id, token);
-        if (@event != null)
+        if (@event == null)
             throw new EventNotFoundException(id);
 
         await _repository.DeleteEventAsync(@event, token);
