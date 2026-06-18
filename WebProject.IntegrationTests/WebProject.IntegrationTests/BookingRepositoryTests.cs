@@ -1,7 +1,6 @@
 ﻿using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using Npgsql.Replication.PgOutput.Messages;
 using Testcontainers.PostgreSql;
 using WebProject.DataAccess;
 using Xunit;
@@ -15,8 +14,8 @@ public class BookingRepositoryTests : IAsyncLifetime
         .WithPassword("postgres")
         .Build();
 
-    public async ValueTask InitializeAsync() => await _postgres.StartAsync();
-    public async ValueTask DisposeAsync() => await _postgres.DisposeAsync();
+    public async Task InitializeAsync() => await _postgres.StartAsync();
+    public async Task DisposeAsync() => await _postgres.DisposeAsync();
 
     private AppDbContext CreateContext()
     {
