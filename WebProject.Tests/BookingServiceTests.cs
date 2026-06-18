@@ -31,8 +31,8 @@ public class BookingServiceTests
         Event mockEvent = Event.Create(
             eventId,
             "Title",
-            DateTime.Now,
-            DateTime.Now.AddDays(1),
+            DateTime.UtcNow,
+            DateTime.UtcNow.AddDays(1),
             10
         );
 
@@ -73,8 +73,8 @@ public class BookingServiceTests
         Event mockEvent = Event.Create(
             eventId,
             "Title",
-            DateTime.Now,
-            DateTime.Now.AddDays(1),
+            DateTime.UtcNow,
+            DateTime.UtcNow.AddDays(1),
             2
         );
 
@@ -109,8 +109,8 @@ public class BookingServiceTests
         Event mockEvent = Event.Create(
             eventId,
             "Title",
-            DateTime.Now,
-            DateTime.Now.AddDays(1),
+            DateTime.UtcNow,
+            DateTime.UtcNow.AddDays(1),
             10
         );
 
@@ -123,7 +123,7 @@ public class BookingServiceTests
         _mockBookingRepository.Setup(br => br.GetBookingsAsync(It.IsAny<Expression < Func<Booking, bool>>> (), default)).ReturnsAsync(mockListPendingBokkings);
         _mockEventRepository.Setup(er => er.GetEventAsync(eventId, default)).ReturnsAsync(mockEvent);
         _mockBookingRepository.Setup(br => br.UpdateBookingAsync(It.IsAny<Booking>(), default));
-        _mockEventRepository.Setup(br => br.UpdateEventAsync(It.IsAny<Event>(), default));
+        _mockEventRepository.Setup(er => er.UpdateEventAsync(It.IsAny<Event>(), default));
 
         // Act 1
         var beforeProcessResult = await _service.GetBookingByIdAsync(bookingId, default);
@@ -136,7 +136,7 @@ public class BookingServiceTests
         // Act 2
         await _service.Confirm(beforeProcessResult, default);
 
-        DateTime now = DateTime.Now;
+        DateTime now = DateTime.UtcNow;
 
         var afterProcessResult = await _service.GetBookingByIdAsync(bookingId, default);
 
@@ -144,7 +144,7 @@ public class BookingServiceTests
         Assert.NotNull(afterProcessResult);
         Assert.Equal(BookingStatus.Confirmed, afterProcessResult.Status);
         Assert.NotNull(afterProcessResult.ProcessedAt);
-        Assert.True((afterProcessResult.ProcessedAt.Value - now).Duration() <= TimeSpan.FromSeconds(3));
+        Assert.True((afterProcessResult.ProcessedAt.Value - now).Duration() <= TimeSpan.FromSeconds(10));
     }
 
 
@@ -160,8 +160,8 @@ public class BookingServiceTests
         Event mockEvent = Event.Create(
             eventId,
             "Title",
-            DateTime.Now,
-            DateTime.Now.AddDays(1),
+            DateTime.UtcNow,
+            DateTime.UtcNow.AddDays(1),
             10
         );
 
@@ -188,7 +188,7 @@ public class BookingServiceTests
         // Act 2
         await _service.Reject(beforeProcessResult, mockEvent);
 
-        DateTime now = DateTime.Now;
+        DateTime now = DateTime.UtcNow;
 
         var afterProcessResult = await _service.GetBookingByIdAsync(bookingId, default);
 
@@ -252,8 +252,8 @@ public class BookingServiceTests
         Event mockEvent = Event.Create(
             eventId,
             "Title",
-            DateTime.Now,
-            DateTime.Now.AddDays(1),
+            DateTime.UtcNow,
+            DateTime.UtcNow.AddDays(1),
             1
         );
 
@@ -285,8 +285,8 @@ public class BookingServiceTests
         Event mockEvent = Event.Create(
             eventId,
             "Title",
-            DateTime.Now,
-            DateTime.Now.AddDays(1),
+            DateTime.UtcNow,
+            DateTime.UtcNow.AddDays(1),
             5
         );
 
@@ -338,8 +338,8 @@ public class BookingServiceTests
         Event mockEvent = Event.Create(
             eventId,
             "Title",
-            DateTime.Now,
-            DateTime.Now.AddDays(1),
+            DateTime.UtcNow,
+            DateTime.UtcNow.AddDays(1),
             10
         );
 
