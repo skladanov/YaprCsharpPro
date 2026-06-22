@@ -9,6 +9,6 @@
 /WebProject.Tests/obj
 /WebProject.Tests/bin/Debug/net10.0
 /WebProject/.vs
-/WebProject.IntegrationTests/WebProject.IntegrationTests/bin
-/WebProject.IntegrationTests/WebProject.IntegrationTests/obj
+/WebProject.IntegrationTests/bin
+/WebProject.IntegrationTests/obj
 /WebProject/.idea

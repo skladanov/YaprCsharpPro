@@ -23,9 +23,7 @@ public class EventRepositoryTests : IAsyncLifetime
             .UseNpgsql(_postgres.GetConnectionString())
             .Options;
 
-        var context = new AppDbContext(options);
-        context.Database.EnsureCreated();
-        return context;
+        return new AppDbContext(options);
     }
 
     private async Task ResetDatabaseAsync()
@@ -33,7 +31,7 @@ public class EventRepositoryTests : IAsyncLifetime
         NpgsqlConnection.ClearAllPools();
         await using var context = CreateContext();
         await context.Database.EnsureDeletedAsync();
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.MigrateAsync();
     }
 
     [Fact]
@@ -156,6 +154,8 @@ public class EventRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task GetAllEvents_WithoutFilters_Succeeds()
     {
+        await ResetDatabaseAsync();
+
         // Arrange
         await using var context = CreateContext();
         var mockEvent1 = Event.Create(
@@ -215,6 +215,8 @@ public class EventRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task GetEvents_FilteringByTitle_Succeeds()
     {
+        await ResetDatabaseAsync();
+
         // Arrange
         await using var context = CreateContext();
         var mockEvent1 = Event.Create(
@@ -269,6 +271,8 @@ public class EventRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task GetEvents_FilteringBy_StartDat_EndDate_Succeeds()
     {
+        await ResetDatabaseAsync();
+
         // Arrange
         await using var context = CreateContext();
         var mockEvent1 = Event.Create(
@@ -345,5 +349,102 @@ public class EventRepositoryTests : IAsyncLifetime
         // Assert
         await using var verifyContext = CreateContext();
         Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task Migrate_ShouldCreateTablesEventsAndBookingsWithForeignKey()
+    {
+        await ResetDatabaseAsync();
+
+        // Arrange
+        await using var context = CreateContext();
+
+        // Assert: проверяем структуру БД напрямую
+        await using var connection = new NpgsqlConnection(context.Database.GetConnectionString());
+        await connection.OpenAsync();
+
+        // Проверяем существование таблицы events
+        var existsEventsTable = await connection.TableExistsAsync("events");
+        Assert.True(existsEventsTable, "Таблица events не создана после миграций");
+
+        // Проверяем существование таблицы bookings
+        var existsBookingsTable = await connection.TableExistsAsync("bookings");
+        Assert.True(existsBookingsTable, "Таблица bookings не создана после миграций");
+
+        // Проверяем наличие столбца event_id в bookings
+        var hasEventIdColumn = await connection.ColumnExistsAsync("bookings", "event_id");
+        Assert.True(hasEventIdColumn, "Столбец event_id не создан в таблице bookings");
+
+        // Проверяем, что event_id — внешний ключ на events.id
+        var isForeignKeySetUp = await connection.IsForeignKeyAsync("bookings", "event_id", "events", "id");
+        Assert.True(isForeignKeySetUp, "Внешний ключ event_id -> events.id не настроен");
+
+        // Дополнительно: проверяем, что столбец не допускает NULL
+        var allowsNull = await connection.ColumnAllowsNullAsync("bookings", "event_id");
+        Assert.False(allowsNull, "Столбец event_id допускает NULL, хотя должен быть внешним ключом");
+    }
+}
+
+public static class NpgsqlExtensions
+{
+    public static async Task<bool> TableExistsAsync(this NpgsqlConnection connection, string tableName)
+    {
+        var cmd = new NpgsqlCommand(
+            $"SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = @tableName)",
+            connection);
+        cmd.Parameters.AddWithValue("tableName", tableName);
+        return (bool)(await cmd.ExecuteScalarAsync());
+    }
+
+    public static async Task<bool> ColumnExistsAsync(this NpgsqlConnection connection, string tableName, string columnName)
+    {
+        var cmd = new NpgsqlCommand(
+            $"SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = @tableName AND column_name = @columnName)",
+            connection);
+        cmd.Parameters.AddWithValue("tableName", tableName);
+        cmd.Parameters.AddWithValue("columnName", columnName);
+        return (bool)(await cmd.ExecuteScalarAsync());
+    }
+
+    public static async Task<bool> IsForeignKeyAsync(
+        this NpgsqlConnection connection,
+        string referencingTable,
+        string referencingColumn,
+        string referencedTable,
+        string referencedColumn)
+    {
+        var cmd = new NpgsqlCommand(
+            @"SELECT COUNT(*) > 0
+              FROM pg_constraint c
+              JOIN pg_class t ON c.conrelid = t.oid
+              JOIN pg_class r ON c.confrelid = r.oid
+              JOIN pg_attribute a1 ON c.conkey[1] = a1.attnum AND a1.attrelid = c.conrelid
+              JOIN pg_attribute a2 ON c.confkey[1] = a2.attnum AND a2.attrelid = c.confrelid
+              WHERE t.relname = @referencingTable
+                AND r.relname = @referencedTable
+                AND a1.attname = @referencingColumn
+                AND a2.attname = @referencedColumn
+                AND c.contype = 'f'",
+            connection);
+
+        cmd.Parameters.AddWithValue("referencingTable", referencingTable);
+        cmd.Parameters.AddWithValue("referencedTable", referencedTable);
+        cmd.Parameters.AddWithValue("referencingColumn", referencingColumn);
+        cmd.Parameters.AddWithValue("referencedColumn", referencedColumn);
+
+        return (bool)(await cmd.ExecuteScalarAsync()); ;
+    }
+
+    public static async Task<bool> ColumnAllowsNullAsync(this NpgsqlConnection connection, string tableName, string columnName)
+    {
+        var cmd = new NpgsqlCommand(
+            $"SELECT is_nullable FROM information_schema.columns " +
+            $"WHERE table_name = @tableName AND column_name = @columnName",
+            connection);
+        cmd.Parameters.AddWithValue("tableName", tableName);
+        cmd.Parameters.AddWithValue("columnName", columnName);
+
+        var result = await cmd.ExecuteScalarAsync();
+        return result is string nullable && nullable.ToLower() == "yes";
     }
 }
