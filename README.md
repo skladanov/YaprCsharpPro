@@ -7,6 +7,9 @@ RESTful API для управления событиями (Events) на баз�
 
 * ASP.NET Core 9.0+
 * Swagger/OpenAPI для документации
+* PostgreSQL
+* EF Core
+* Docker
 
 ## Функциональность
 
@@ -66,6 +69,7 @@ API предоставляет операции для работы с серв�
 
 4. Схема управляется миграциями EF Core:
    ```bash
+   dotnet ef migrations add <CreateProduct>
    dotnet ef database update
    dotnet ef database update <PreviousMigration>
    dotnet ef migrations remove
