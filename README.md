@@ -1,4 +1,4 @@
-﻿# WebProject API — ASP.NET Core Web API
+# WebProject API — ASP.NET Core Web API
 
 RESTful API для управления событиями (Events) на базе ASP.NET Core.
 
@@ -59,8 +59,14 @@ API предоставляет операции для работы с серв�
    dotnet run
    ```
 
-3. Запустите тесты:
+3. Запустите тесты (для интеграциооных тестов нужен Docker):
    ```bash
-   cd YaprCsharpPro/WebProject.Tests
    dotnet test
+   ```
+
+4. Схема управляется миграциями EF Core:
+   ```bash
+   dotnet ef database update
+   dotnet ef database update <PreviousMigration>
+   dotnet ef migrations remove
    ```
