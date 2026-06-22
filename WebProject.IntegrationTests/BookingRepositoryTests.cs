@@ -1,48 +1,25 @@
-﻿using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using Testcontainers.PostgreSql;
-using WebProject.DataAccess;
+using System.Linq.Expressions;
+using WebProject.IntegrationTests;
 using Xunit;
 
-public class BookingRepositoryTests : IAsyncLifetime
+public class BookingRepositoryTests : IClassFixture<DatabaseFixture>
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
-        .WithImage("postgres:16-alpine")
-        .WithDatabase("eventapi")
-        .WithUsername("postgres")
-        .WithPassword("postgres")
-        .Build();
+    private readonly DatabaseFixture _fixture;
 
-    public async Task InitializeAsync() => await _postgres.StartAsync();
-    public async Task DisposeAsync() => await _postgres.DisposeAsync();
-
-    private AppDbContext CreateContext()
+    public BookingRepositoryTests(DatabaseFixture fixture)
     {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(_postgres.GetConnectionString())
-            .Options;
-
-        var context = new AppDbContext(options);
-        context.Database.EnsureCreated();
-        return context;
+        _fixture = fixture;
     }
 
-    private async Task ResetDatabaseAsync()
-    {
-        NpgsqlConnection.ClearAllPools();
-        await using var context = CreateContext();
-        await context.Database.EnsureDeletedAsync();
-        await context.Database.EnsureCreatedAsync();
-    }
-    
     [Fact]
     public async Task CreateBooking_ReturnsBookingWithPendingStatus()
     {
-        await ResetDatabaseAsync();
+        await _fixture.ResetDatabaseAsync();
         
         // Arrange
-        await using var context = CreateContext();
+        await using var context = _fixture.CreateContext();
         
         var eventId = Guid.NewGuid();
         Event mockEvent = Event.Create(
@@ -60,11 +37,11 @@ public class BookingRepositoryTests : IAsyncLifetime
         await context.SaveChangesAsync();
         
         // Act
-        var repository = new BookingRepository(CreateContext());
+        var repository = new BookingRepository(_fixture.CreateContext());
         await repository.CreateBookingAsync(booking, default);
         
         // Assert
-        await using var verifyContext = CreateContext();
+        await using var verifyContext = _fixture.CreateContext();
         var result = verifyContext.bookings.FirstOrDefault(e => e.Id == booking.Id);
         Assert.NotNull(result);
         Assert.Equal(Booking.BookingStatus.Pending, result.Status);
@@ -74,10 +51,10 @@ public class BookingRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task GetBookingById_ForExistingBooking_ReturnsBookingSuccesed()
     {
-        await ResetDatabaseAsync();
+        await _fixture.ResetDatabaseAsync();
         
         // Arrange
-        await using var context = CreateContext();
+        await using var context = _fixture.CreateContext();
         
         var eventId = Guid.NewGuid();
         Event mockEvent = Event.Create(
@@ -96,11 +73,11 @@ public class BookingRepositoryTests : IAsyncLifetime
         await context.SaveChangesAsync();
         
         // Act
-        var repository = new BookingRepository(CreateContext());
+        var repository = new BookingRepository(_fixture.CreateContext());
         Booking result = await repository.GetBookingByIdAsync(booking.Id,  default);
         
         // Assert
-        await using var verifyContext = CreateContext();
+        await using var verifyContext = _fixture.CreateContext();
         Assert.NotNull(result);
         Assert.Equal(Booking.BookingStatus.Pending, result.Status);
         Assert.Equal(booking.Id, result.Id);
@@ -109,10 +86,10 @@ public class BookingRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task GetpendingBookings_ForExistingBookings_ReturnsAllBookings()
     {
-        await ResetDatabaseAsync();
+        await _fixture.ResetDatabaseAsync();
         
         // Arrange
-        await using var context = CreateContext();
+        await using var context = _fixture.CreateContext();
         
         var eventId = Guid.NewGuid();
         Event mockEvent = Event.Create(
@@ -134,13 +111,13 @@ public class BookingRepositoryTests : IAsyncLifetime
         await context.SaveChangesAsync();
         
         // Act
-        var repository = new BookingRepository(CreateContext());
+        var repository = new BookingRepository(_fixture.CreateContext());
         Expression<Func<Booking, bool>> predicate = e =>
             (e.Status == Booking.BookingStatus.Pending);
         List<Booking> result = await repository.GetBookingsAsync(predicate,  default);
         
         // Assert
-        await using var verifyContext = CreateContext();
+        await using var verifyContext = _fixture.CreateContext();
         Assert.NotNull(result);
         Assert.Equal(3, result.Count);
     }
@@ -149,10 +126,10 @@ public class BookingRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task UpdateBookingStatus_ForExistingBooking_ReturnsUpdatedBooking()
     {
-        await ResetDatabaseAsync();
+        await _fixture.ResetDatabaseAsync();
 
         // Arrange
-        await using var context = CreateContext();
+        await using var context = _fixture.CreateContext();
         
         var eventId = Guid.NewGuid();
         Event mockEvent = Event.Create(
@@ -171,12 +148,12 @@ public class BookingRepositoryTests : IAsyncLifetime
         await context.SaveChangesAsync();
 
         // Act
-        var repository = new BookingRepository(CreateContext());
+        var repository = new BookingRepository(_fixture.CreateContext());
         booking.Confirm();
         await repository.UpdateBookingAsync(booking, default);
 
         // Assert
-        await using var verifyContext = CreateContext();
+        await using var verifyContext = _fixture.CreateContext();
         Booking result = await verifyContext.bookings.FirstOrDefaultAsync(e => e.Id == booking.Id);
         Assert.NotNull(result);
         Assert.Equal(Booking.BookingStatus.Confirmed, result.Status);

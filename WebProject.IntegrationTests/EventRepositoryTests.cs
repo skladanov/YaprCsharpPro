@@ -1,46 +1,25 @@
-﻿using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using Testcontainers.PostgreSql;
-using WebProject.DataAccess;
+using System.Linq.Expressions;
+using WebProject.IntegrationTests;
 using Xunit;
 
-public class EventRepositoryTests : IAsyncLifetime
+public class EventRepositoryTests : IClassFixture<DatabaseFixture>
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
-        .WithImage("postgres:16-alpine")
-        .WithDatabase("eventapi")
-        .WithUsername("postgres")
-        .WithPassword("postgres")
-        .Build();
+    private readonly DatabaseFixture _fixture;
 
-    public async Task InitializeAsync() => await _postgres.StartAsync();
-    public async Task DisposeAsync() => await _postgres.DisposeAsync();
-
-    private AppDbContext CreateContext()
+    public EventRepositoryTests(DatabaseFixture fixture)
     {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(_postgres.GetConnectionString())
-            .Options;
-
-        return new AppDbContext(options);
-    }
-
-    private async Task ResetDatabaseAsync()
-    {
-        NpgsqlConnection.ClearAllPools();
-        await using var context = CreateContext();
-        await context.Database.EnsureDeletedAsync();
-        await context.Database.MigrateAsync();
+        _fixture = fixture;
     }
 
     [Fact]
     public async Task GetEventById_ForExistingEvent_ReturnsEvent()
     {
-        await ResetDatabaseAsync();
+        await _fixture.ResetDatabaseAsync();
 
         // Arrange
-        await using var context = CreateContext();
+        using var context = _fixture.CreateContext();
         var testEvent = Event.Create(
             Guid.NewGuid(),
             "Event",
@@ -52,11 +31,11 @@ public class EventRepositoryTests : IAsyncLifetime
         await context.SaveChangesAsync();
 
         // Act
-        var repository = new EventRepository(CreateContext());
+        var repository = new EventRepository(_fixture.CreateContext());
         var result = await repository.GetEventAsync(testEvent.Id, default);
 
         // Assert
-        await using var verifyContext = CreateContext();
+        await using var verifyContext = _fixture.CreateContext();
         Assert.NotNull(result);
         Assert.Equal("Event", result.Title);
     }
@@ -64,7 +43,7 @@ public class EventRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task CreateEvent_ForNonExistingEvent_EventCreated()
     {
-        await ResetDatabaseAsync();
+        await _fixture.ResetDatabaseAsync();
 
         // Arrange
         var testEvent = Event.Create(
@@ -76,12 +55,12 @@ public class EventRepositoryTests : IAsyncLifetime
         );
 
         // Act
-        await using var context = CreateContext();
-        var repository = new EventRepository(CreateContext());
+        await using var context = _fixture.CreateContext();
+        var repository = new EventRepository(_fixture.CreateContext());
         await repository.AddEventAsync(testEvent, default);
 
         // Assert
-        await using var verifyContext = CreateContext();
+        await using var verifyContext = _fixture.CreateContext();
         var result = verifyContext.events.FirstOrDefault(e => e.Id == testEvent.Id);
         Assert.NotNull(result);
         Assert.Equal("Event_2", result.Title);
@@ -90,10 +69,10 @@ public class EventRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task UpdateEvent_ForExistingEvent_EventUpdated()
     {
-        await ResetDatabaseAsync();
+        await _fixture.ResetDatabaseAsync();
 
         // Arrange
-        await using var context = CreateContext();
+        await using var context = _fixture.CreateContext();
         var testEvent = Event.Create(
             Guid.NewGuid(),
             "testEvent",
@@ -113,11 +92,11 @@ public class EventRepositoryTests : IAsyncLifetime
         );
 
         // Act
-        var repository = new EventRepository(CreateContext());
+        var repository = new EventRepository(_fixture.CreateContext());
         await repository.UpdateEventAsync(updatedEvent, default);
 
         // Assert
-        await using var verifyContext = CreateContext();
+        await using var verifyContext = _fixture.CreateContext();
         var result = verifyContext.events.FirstOrDefault(e => e.Id == testEvent.Id);
         Assert.NotNull(result);
         Assert.Equal("updatedEvent", result.Title);
@@ -126,10 +105,10 @@ public class EventRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task DeleteEvent_ForExistingEvent_EventDeleted()
     {
-        await ResetDatabaseAsync();
+        await _fixture.         ResetDatabaseAsync();
 
         // Arrange
-        await using var context = CreateContext();
+        await using var context = _fixture.CreateContext();
         var testEvent = Event.Create(
             Guid.NewGuid(),
             "Event",
@@ -141,11 +120,11 @@ public class EventRepositoryTests : IAsyncLifetime
         await context.SaveChangesAsync();
 
         // Act
-        var repository = new EventRepository(CreateContext());
+        var repository = new EventRepository(_fixture.CreateContext());
         await repository.DeleteEventAsync(testEvent, default);
 
         // Assert
-        await using var verifyContext = CreateContext();
+        await using var verifyContext = _fixture.CreateContext();
         var result = verifyContext.events.FirstOrDefault(e => e.Id == testEvent.Id);
         Assert.Null(result);
     }
@@ -154,10 +133,10 @@ public class EventRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task GetAllEvents_WithoutFilters_Succeeds()
     {
-        await ResetDatabaseAsync();
+        await _fixture.ResetDatabaseAsync();
 
         // Arrange
-        await using var context = CreateContext();
+        await using var context = _fixture.CreateContext();
         var mockEvent1 = Event.Create(
             Guid.NewGuid(),
             "Event 1",
@@ -197,7 +176,7 @@ public class EventRepositoryTests : IAsyncLifetime
             (!to.HasValue || e.EndAt <= to.Value);
 
         // Act
-        var repository = new EventRepository(CreateContext());
+        var repository = new EventRepository(_fixture.CreateContext());
         var result = await repository.GetAllEventsAsync(predicate, default);
 
         // Assert
@@ -215,10 +194,10 @@ public class EventRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task GetEvents_FilteringByTitle_Succeeds()
     {
-        await ResetDatabaseAsync();
+        await _fixture.ResetDatabaseAsync();
 
         // Arrange
-        await using var context = CreateContext();
+        await using var context = _fixture.CreateContext();
         var mockEvent1 = Event.Create(
             Guid.NewGuid(),
             "Event 1",
@@ -257,7 +236,7 @@ public class EventRepositoryTests : IAsyncLifetime
             (!to.HasValue || e.EndAt <= to.Value);
 
         // Act
-        var repository = new EventRepository(CreateContext());
+        var repository = new EventRepository(_fixture.CreateContext());
         var result = await repository.GetAllEventsAsync(predicate, default);
 
         // Assert
@@ -271,10 +250,10 @@ public class EventRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task GetEvents_FilteringBy_StartDat_EndDate_Succeeds()
     {
-        await ResetDatabaseAsync();
+        await _fixture.ResetDatabaseAsync();
 
         // Arrange
-        await using var context = CreateContext();
+        await using var context = _fixture.CreateContext();
         var mockEvent1 = Event.Create(
             Guid.NewGuid(),
             "Event 1",
@@ -313,7 +292,7 @@ public class EventRepositoryTests : IAsyncLifetime
             (!to.HasValue || e.EndAt <= to.Value);
 
         // Act
-        var repository = new EventRepository(CreateContext());
+        var repository = new EventRepository(_fixture.CreateContext());
         var result = await repository.GetAllEventsAsync(predicate, default);
 
         // Assert
@@ -327,10 +306,10 @@ public class EventRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task GetEventById_ForNonExistingEvent_ReturnsNull()
     {
-        await ResetDatabaseAsync();
+        await _fixture.ResetDatabaseAsync();
 
         // Arrange
-        await using var context = CreateContext();
+        await using var context = _fixture.CreateContext();
         var mockEvent = Event.Create(
             Guid.NewGuid(),
             "Event",
@@ -343,21 +322,21 @@ public class EventRepositoryTests : IAsyncLifetime
         await context.SaveChangesAsync();
 
         // Act
-        var repository = new EventRepository(CreateContext());
+        var repository = new EventRepository(_fixture.CreateContext());
         var result = await repository.GetEventAsync(testID , default);
 
         // Assert
-        await using var verifyContext = CreateContext();
+        await using var verifyContext = _fixture.CreateContext();
         Assert.Null(result);
     }
 
     [Fact]
     public async Task Migrate_ShouldCreateTablesEventsAndBookingsWithForeignKey()
     {
-        await ResetDatabaseAsync();
+        await _fixture.ResetDatabaseAsync();
 
         // Arrange
-        await using var context = CreateContext();
+        await using var context = _fixture.CreateContext();
 
         // Assert: проверяем структуру БД напрямую
         await using var connection = new NpgsqlConnection(context.Database.GetConnectionString());
