@@ -3,6 +3,13 @@ using System.Text.Json.Serialization;
 
 public class Booking
 {
+    public Guid Id { get; init; }
+    public BookingStatus Status {  get; private set; }
+    public DateTime CreatedAt { get; private set; }
+    public DateTime? ProcessedAt { get; private set; }
+    public Guid EventId {  get; init; }
+    public Event? Event { get; private set; }
+    
     private Booking() { }
 
     public static Booking Create(Guid id, Guid eventId)
@@ -18,25 +25,14 @@ public class Booking
             Id = id,
             EventId = eventId,
             Status = BookingStatus.Pending,
-            CreatedAt = DateTime.Now
+            CreatedAt = DateTime.UtcNow
         };
     }
-
-    [Required]
-    public Guid Id { get; init; }
-    [Required]
-    public Guid EventId {  get; init; }
-    [Required]
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public BookingStatus Status {  get; private set; }
-    [Required]
-    public DateTime CreatedAt { get; private set; }
-    public DateTime? ProcessedAt { get; private set; }
 
     public void Confirm()
     {
         Status = BookingStatus.Confirmed;
-        ProcessedAt = DateTime.Now;
+        ProcessedAt = DateTime.UtcNow;
     }
 
     public void Reject()

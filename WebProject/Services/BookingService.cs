@@ -20,15 +20,15 @@ public class BookingService : IBookingService
     {
         _logger.LogInformation($"Attempting to create a booking for event with ID: {eventId}");
 
-        var newBookingId = Guid.Empty;
-
         var bookingId = Guid.NewGuid();
 
         var newBooking = Booking.Create(bookingId, eventId);
-
-        lock (_bookingLock)
+    
+        await _processingSemaphore.WaitAsync();
+        
+        try
         {
-            Event? existsEvent = _eventRepository.GetEventAsync(eventId, token).Result;
+            Event? existsEvent = await _eventRepository.GetEventAsync(eventId, token);
 
             if (existsEvent == null)
                 throw new EventNotFoundException(eventId);
@@ -38,17 +38,22 @@ public class BookingService : IBookingService
             if (!isReserved)
                 throw new NoAvailableSeatsException(eventId);
 
-            bool result = _eventRepository.UpdateEventAsync(existsEvent, token).Result;
+            await _eventRepository.UpdateEventAsync(existsEvent, token);
 
-            if (!result)
-                throw new EventNotFoundException(eventId);
-
-            newBookingId = _bookingRepository.CreateBookingAsync(newBooking, token).Result;
+            await _bookingRepository.CreateBookingAsync(newBooking, token);
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
+            _logger.LogInformation("Booking process service is stopping due to cancellation request.");
+        }
+        finally
+        {
+            _processingSemaphore.Release();
         }
 
-        _logger.LogInformation($"Successfully created booking with ID {newBookingId} for event {eventId}.");
+        _logger.LogInformation($"Successfully created booking with ID {bookingId} for event {eventId}.");
 
-        return newBookingId;
+        return newBooking.Id;
     }
 
     public async Task<Booking?> GetBookingByIdAsync(Guid bookingId, CancellationToken token)
@@ -68,7 +73,7 @@ public class BookingService : IBookingService
         return booking;
     }
 
-    public async Task BookingProcessAsync(Booking booking, CancellationToken stoppingToken)
+    public async Task BookingProcessAsync(Booking booking, CancellationToken token)
     {
         await _processingSemaphore.WaitAsync();
 
@@ -77,10 +82,12 @@ public class BookingService : IBookingService
         try
         {
             eventItem = await _eventRepository.GetEventAsync(booking.EventId, default);
+            if (eventItem == null)
+                throw new EventNotFoundException(booking.EventId);
 
-            await Confirm(booking, stoppingToken);
+            await Confirm(booking, token);
         }
-        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
         {
             await Reject(booking, eventItem);
 
@@ -126,21 +133,12 @@ public class BookingService : IBookingService
         booking.Reject();
 
         await _bookingRepository.UpdateBookingAsync(booking, CancellationToken.None);
-
+        
         if (eventItem == null)
-        {
-            _logger.LogWarning("Probably booking was rejected, because event not found");
-
             return;
-        }
-
+        
         eventItem.ReleaseSeats();
 
-        bool isEventUpdated = await _eventRepository.UpdateEventAsync(eventItem, CancellationToken.None);
-
-        if (!isEventUpdated)
-        {
-            _logger.LogError($"An error occurred while release seats");
-        }
+        await _eventRepository.UpdateEventAsync(eventItem, CancellationToken.None);
     }
 }

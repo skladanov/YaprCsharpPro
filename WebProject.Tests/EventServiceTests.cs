@@ -25,8 +25,8 @@ public class EventServiceTests
         var eventRequest = new CreateEvent
         {
             Title = "TitleString",
-            StartAt = DateTime.Now,
-            EndAt = DateTime.Now + TimeSpan.FromDays(1),
+            StartAt = DateTime.UtcNow,
+            EndAt = DateTime.UtcNow + TimeSpan.FromDays(1),
             TotalSeats = 10
         };
 
@@ -93,8 +93,8 @@ public class EventServiceTests
         Event eventResult = Event.Create(
             Guid.NewGuid(),
             "Title",
-            DateTime.Now,
-            DateTime.Now.AddDays(1),
+            DateTime.UtcNow,
+            DateTime.UtcNow.AddDays(1),
             10
         );
 
@@ -120,21 +120,21 @@ public class EventServiceTests
         Event existsEvent = Event.Create(
             id,
             "Title",
-            DateTime.Now,
-            DateTime.Now.AddDays(1),
+            DateTime.UtcNow,
+            DateTime.UtcNow.AddDays(1),
             10
         );
 
         var newEventData = new UpdateEvent
         {
             Title = "UpdatedTitle",
-            StartAt = DateTime.Now.AddDays(2),
-            EndAt = DateTime.Now.AddDays(4),
+            StartAt = DateTime.UtcNow.AddDays(2),
+            EndAt = DateTime.UtcNow.AddDays(4),
             TotalSeats =  5
         };
 
-
-        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<Event>(), default)).ReturnsAsync(true);
+        _mockRepository.Setup(m => m.GetEventAsync(id, default)).ReturnsAsync(existsEvent);
+        _mockRepository.Setup(m => m.UpdateEventAsync(It.IsAny<Event>(), default));
 
         // Act
         await _service.UpdateEventAsync(newEventData, existsEvent.Id, default);
@@ -148,21 +148,24 @@ public class EventServiceTests
     public async Task DeleteExistingEvent_Succeeds()
     {
         // Arrange
+        var id = Guid.NewGuid();
+
         Event existsEvent = Event.Create(
-            Guid.NewGuid(),
+            id,
             "Title",
-            DateTime.Now,
-            DateTime.Now.AddDays(1),
+            DateTime.UtcNow,
+            DateTime.UtcNow.AddDays(1),
             10
         );
 
-        _mockRepository.Setup(m => m.DeleteEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(true);
+        _mockRepository.Setup(m => m.GetEventAsync(id, default)).ReturnsAsync(existsEvent);
+        _mockRepository.Setup(m => m.DeleteEventAsync(It.IsAny<Event>(), default));
 
         // Act
         await _service.DeleteEventAsync(existsEvent.Id, default);
 
         // Assert
-        _mockRepository.Verify(m => m.DeleteEventAsync(It.Is<Guid>(id => id == existsEvent.Id), default), Times.Once);
+        _mockRepository.Verify(m => m.DeleteEventAsync(It.IsAny<Event>(), default), Times.Once);
     }
 
     // 6. фильтрация по названию
@@ -457,8 +460,8 @@ public class EventServiceTests
         var eventRequest = new CreateEvent
         {
             Title = "TitleString",
-            StartAt = DateTime.Now,
-            EndAt = DateTime.Now - TimeSpan.FromDays(1)
+            StartAt = DateTime.UtcNow,
+            EndAt = DateTime.UtcNow - TimeSpan.FromDays(1)
         };
 
         _mockRepository.Setup(m => m.AddEventAsync(It.IsAny<Event>(), default));

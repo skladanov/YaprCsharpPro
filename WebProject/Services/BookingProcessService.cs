@@ -17,7 +17,6 @@ public class BookingProcessService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
-
             using (var scope = _serviceScopeFactory.CreateScope())
             {
                 var _bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
@@ -34,6 +33,8 @@ public class BookingProcessService : BackgroundService
                     await Task.WhenAll(tasks);
                 }
             }
+            
+            await Task.Delay(5000, stoppingToken);
         }
     }
 }
