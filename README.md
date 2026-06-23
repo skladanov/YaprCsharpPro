@@ -2,6 +2,12 @@
 
 RESTful API для управления событиями (Events) на базе ASP.NET Core.
 
+Приложение состоит из 4х слоев:
+Domain — доменные сущности: event, booking; доменные исключения.
+Application — use cases, сервисы, интерфейсы репозитория, DTOs.
+Infrastructure — реализации портов: репозитории, DbContext, конфигурации базы, миграции.
+Presentation — контроллеры (эндпоинты), HTTP-маппинг, регистрация зависимостей.
+
 ## Технологии
 
 
@@ -59,7 +65,7 @@ API предоставляет операции для работы с серв�
 2. Соберите и запустите проект:
    ```bash
    dotnet build
-   dotnet run
+   dotnet run --project Presentation/WebProject.csproj
    ```
 
 3. Запустите тесты (для интеграциооных тестов нужен Docker):
@@ -69,8 +75,8 @@ API предоставляет операции для работы с серв�
 
 4. Схема управляется миграциями EF Core:
    ```bash
-   dotnet ef migrations add <CreateProduct>
-   dotnet ef database update
-   dotnet ef database update <PreviousMigration>
-   dotnet ef migrations remove
+   dotnet ef migrations add WebProjectDB --project Infrastructure --startup-project Presentation
+   dotnet ef database update --project Infrastructure --startup-project Presentation
+   dotnet ef database update <PreviousMigration> --project Infrastructure --startup-project Presentation
+   dotnet ef migrations remove --project Infrastructure --startup-project Presentation
    ```

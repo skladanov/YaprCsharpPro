@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace WebProject.DataAccess.Configuration;
+namespace Infrastructure.DataAccess.Configuration;
 
 public class EventConfiguration : IEntityTypeConfiguration<Event>
 {

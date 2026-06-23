@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace WebProject.DataAccess;
+namespace Infrastructure.DataAccess;
 
 public class AppDbContext : DbContext
 {

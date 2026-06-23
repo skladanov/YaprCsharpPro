@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
-using WebProject.DataAccess; 
+using Infrastructure.DataAccess; 
 
 public class EventRepository : IEventRepository
 {

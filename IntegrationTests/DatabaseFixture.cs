@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Testcontainers.PostgreSql;
-using WebProject.DataAccess;
+using Infrastructure.DataAccess;
 using Xunit;
 
 namespace WebProject.IntegrationTests

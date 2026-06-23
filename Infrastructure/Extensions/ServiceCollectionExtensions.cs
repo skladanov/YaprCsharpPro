@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
-using WebProject.DataAccess;
+using Infrastructure.DataAccess;
 
 namespace Infrastructure.Extensions
 {
