@@ -6,10 +6,7 @@ using Infrastructure.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddScoped<IEventService, EventService>();
-builder.Services.AddScoped<IBookingService, BookingService>();
-
-builder.Services.AddHostedService<BookingProcessService>();
+builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Logging.AddConsole();

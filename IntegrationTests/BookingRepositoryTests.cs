@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using System.Linq.Expressions;
 using WebProject.IntegrationTests;
 using Xunit;

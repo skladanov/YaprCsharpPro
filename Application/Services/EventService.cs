@@ -1,9 +1,6 @@
-using Microsoft.AspNetCore.Mvc.Diagnostics;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using System;
+using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
-using System.Runtime.InteropServices;
-using static System.Net.WebRequestMethods;
+
 
 public class EventService : IEventService
 {

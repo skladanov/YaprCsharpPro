@@ -1,4 +1,5 @@
 
+using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
 public class BookingService : IBookingService
