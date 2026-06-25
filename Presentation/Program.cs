@@ -1,7 +1,7 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Infrastructure.DataAccess;
 using Infrastructure.Extensions;
+using Application.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
