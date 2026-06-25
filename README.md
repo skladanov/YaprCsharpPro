@@ -59,7 +59,7 @@ API предоставляет операции для работы с серв�
 1. Клонируйте репозиторий:
    ```bash
    git clone https://github.com/skladanov/YaprCsharpPro.git
-   cd YaprCsharpPro/WebProject
+   cd YaprCsharpPro
    ```
 
 2. Соберите и запустите проект:
