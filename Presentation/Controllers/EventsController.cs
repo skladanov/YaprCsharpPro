@@ -44,9 +44,6 @@ public class EventsController : ControllerBase
     {
         var result = await _eventService.GetEventAsync(id, token);
 
-        if (result == null)
-            throw new EventNotFoundException(id);
-
         return Ok(result);
     }
 
