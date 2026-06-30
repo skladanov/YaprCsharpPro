@@ -1,6 +1,5 @@
 using Domain.Exceptions;
-using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
+using Domain.Models;
 
 public class Booking
 {
@@ -11,10 +10,11 @@ public class Booking
     public Guid EventId {  get; init; }
     public Guid UserId { get; init; }
     public Event? Event { get; private set; }
-    
+    public User? User { get; private set; }
+
     private Booking() { }
 
-    public static Booking Create(Guid id, Guid eventId, Guid userId)
+    public static Booking Create(Guid id, Guid userId, Guid eventId)
     {
         if (id == Guid.Empty) 
             throw new ArgumentNullException("BookingID cannot be null or empty", nameof(id));
@@ -22,9 +22,13 @@ public class Booking
         if (eventId == Guid.Empty)
             throw new ArgumentNullException("EventID cannot be null or empty", nameof(id));
 
+        if (userId == Guid.Empty)
+            throw new ArgumentNullException("UserID cannot be null or empty", nameof(id));
+
         return new Booking()
         {
             Id = id,
+            UserId = userId,
             EventId = eventId,
             Status = BookingStatus.Pending,
             CreatedAt = DateTime.UtcNow

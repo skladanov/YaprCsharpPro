@@ -28,10 +28,18 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
         
         builder.Property(b => b.EventId)
             .HasColumnName("event_id").IsRequired();
-        
+
+        builder.Property(b => b.UserId)
+            .HasColumnName("user_id").IsRequired();
+
         builder.HasOne(b => b.Event)
             .WithMany(e => e.Bookings)
             .HasForeignKey(b => b.EventId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(b => b.User)
+            .WithMany(u => u.Bookings)
+            .HasForeignKey(b => b.UserId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

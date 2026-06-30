@@ -1,6 +1,6 @@
 public interface IBookingService
 {
-    Task<Guid> CreateBookingAsync(Guid eventId, CancellationToken token);
+    Task<Guid> CreateBookingAsync(Guid userId, Guid eventId, CancellationToken token);
     Task<Booking?> GetBookingByIdAsync(Guid bookingId, CancellationToken token);
     Task<List<Booking>?> GetPendingsAsync(CancellationToken stoppingToken);
     Task BookingProcessAsync(Booking booking, CancellationToken stoppingToken);
