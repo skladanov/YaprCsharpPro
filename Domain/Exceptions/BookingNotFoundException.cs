@@ -1,8 +1,8 @@
 public class BookingNotFoundException : BusinessException
 {
     public BookingNotFoundException()
-        : base("Event has no available seats") { }
+        : base("Booking not found") { }
 
     public BookingNotFoundException(Guid bookingId)
-        : base($"Event with ID {bookingId} has no available seats") { }
+        : base($"Booking with ID {bookingId} not found") { }
 }
