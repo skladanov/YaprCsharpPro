@@ -1,11 +1,10 @@
-﻿using Domain.Models;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Application.Services
 {
-    interface IUserRepository
+    public interface IUserRepository
     {
-        Task UserRegisterAsync(String login, UserRole role, String password, CancellationToken token);
-        Task UserLoginAsync(Guid userId, CancellationToken token);
-        Task<User> GetUserAsync(Guid userId, CancellationToken token);
     }
 }

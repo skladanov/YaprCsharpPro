@@ -1,3 +1,4 @@
+using Domain.Exceptions;
 using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
@@ -7,12 +8,12 @@ namespace Application.Services
     {
         private readonly IBookingRepository _bookingRepository;
         private readonly IEventRepository _eventRepository;
-        private readonly IUserRepository _userRepository;
+        private readonly IUserService _userRepository;
         private readonly ILogger<BookingService> _logger;
         private readonly object _bookingLock = new object();
         private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
 
-        public BookingService(IBookingRepository bookingRepository, IEventRepository eventRepository, IUserRepository userRepository, ILogger<BookingService> logger)
+        public BookingService(IBookingRepository bookingRepository, IEventRepository eventRepository, IUserService userRepository, ILogger<BookingService> logger)
         {
             _bookingRepository = bookingRepository;
             _eventRepository = eventRepository;
@@ -37,6 +38,9 @@ namespace Application.Services
 
                 if (existsEvent == null)
                     throw new EventNotFoundException(eventId);
+
+                if (existsEvent.EndAt < DateTime.UtcNow)
+                    throw new BookingForPastEventException(bookingId, existsEvent.Id);
 
                 bool isReserved = existsEvent.TryReserveSeats();
 
