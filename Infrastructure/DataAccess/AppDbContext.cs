@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Domain.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.DataAccess;
 
@@ -8,7 +9,8 @@ public class AppDbContext : DbContext
     
     public DbSet<Booking>? bookings => Set<Booking>();
     public DbSet<Event>? events => Set<Event>();
-    
+    public DbSet<User>? users => Set<User>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
