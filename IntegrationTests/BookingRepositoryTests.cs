@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
-using WebProject.IntegrationTests;
 using Xunit;
 
 public class BookingRepositoryTests : IClassFixture<DatabaseFixture>
