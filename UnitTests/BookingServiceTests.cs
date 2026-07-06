@@ -7,15 +7,18 @@ public class BookingServiceTests
 {
     private readonly Mock<IBookingRepository> _mockBookingRepository;
     private readonly Mock<IEventRepository> _mockEventRepository;
+    private readonly Mock<IUserRepository> _mockUserRepository;
     private readonly Mock<ILogger<BookingService>> _mockBookingLogger;
     private readonly IBookingService _service;
+    private readonly Guid userId;
 
     public BookingServiceTests()
     {
         _mockBookingRepository = new Mock<IBookingRepository>();
         _mockEventRepository = new Mock<IEventRepository>();
+        _mockUserRepository = new Mock<IUserRepository>();
         _mockBookingLogger = new Mock<ILogger<BookingService>>();
-        _service = new BookingService(_mockBookingRepository.Object, _mockEventRepository.Object, _mockBookingLogger.Object);
+        _service = new BookingService(_mockBookingRepository.Object, _mockEventRepository.Object, _mockUserRepository.Object, _mockBookingLogger.Object);
     }
     //Успешные сценарии:
 
