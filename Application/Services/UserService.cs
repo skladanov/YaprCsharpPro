@@ -19,44 +19,38 @@ namespace Application.Services
             _logger = logger;
         }
 
-        public async Task<string?> LoginAsync(string login, string password, CancellationToken token)
+        public async Task<string?> LoginAsync(LoginRequest request, CancellationToken token)
         {
             // 1. Ищем пользователя по логину (без загрузки лишних данных — репозиторий делает FirstOrDefault)
-            var user = await _repository.GetByLoginAsync(login, token);
+            var user = await _repository.GetByLoginAsync(request.Login, token);
 
             if (user is null)
-            {
-                // Важно: не сообщай злоумышленнику, что именно не так (логин или пароль).
-                // Для API достаточно вернуть null или общий ответ «неверные учётные данные».
-                return null;
-            }
+                throw new UnauthorizedAccessException();
 
             // 2. Проверяем пароль через безопасный метод сравнения
-            if (! _passwordHasher.Verify(password, user.PasswordHash))
-            {
-                return null;
-            }
+            if (! _passwordHasher.Verify(request.Password, user.PasswordHash))
+                throw new UnauthorizedAccessException();
 
             // 3. Генерируем JWT-токен
             return _jwtTokenGenerator.GenerateToken(user.Id, user.Login, user.Role);
         }
 
-        public async Task RegisterAsync(string login, UserRole role, string password, CancellationToken token)
+        public async Task RegisterAsync(RegisterRequest request, CancellationToken token)
         {
-            var exists = await _repository.GetByLoginAsync(login, token);
-            if (exists != null)
-                throw new DuplicateLoginException(login);
+            var user = await _repository.GetByLoginAsync(request.Login, token);
+            if (user is not null)
+                throw new DuplicateLoginException(request.Login);
 
-            var hash = _passwordHasher.Hash(password);
+            var hash = _passwordHasher.Hash(request.Password);
 
-            var user = User.Create(
+            var newUser = User.Create(
                 id: Guid.NewGuid(),
-                login: login,
+                login: request.Login,
                 passwordHash: hash,
-                role: role
+                role: request.Role ?? UserRole.User
             );
 
-            await _repository.AddUserAsync(user, token);
+            await _repository.AddUserAsync(newUser, token);
         }
     }
 }

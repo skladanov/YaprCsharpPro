@@ -1,10 +1,6 @@
 ﻿using Application.Services;
-using Domain.Exceptions;
-using Domain.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
 
 namespace WebProject.Controllers
 {
@@ -21,31 +17,20 @@ namespace WebProject.Controllers
 
         [HttpPost("register")]
         [AllowAnonymous]
-        public async Task<IActionResult> Register([FromBody] string Login, string Password, string? Role, CancellationToken token)
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request, CancellationToken token)
         {
-            try
-            {
-                await _userService.RegisterAsync(
-                    login: Login,
-                    role: Role ?? "User", // по умолчанию User
-                    password: Password,
-                    token: token);
+            await _userService.RegisterAsync(request, token);
 
-                return Ok(new { message = "Пользователь успешно зарегистрирован" });
-            }
+            return Ok(new { message = "Пользователь успешно зарегистрирован" });
+        }
 
-            // Обрабатываем бизнес-ошибку «логин уже занят»
-            catch (DuplicateLoginException)
-            {
-                return Conflict(new { message = "Логин уже занят" });
-            }
+        [HttpPost("login")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Login([FromBody] RegisterRequest request, CancellationToken token)
+        {
+            await _userService.RegisterAsync(request, token);
 
-            // Любая другая ошибка — 500 (в проде лучше логировать и возвращать обезличенное сообщение)
-            catch (Exception ex)
-            {
-                // В тестах можно оставить ex.Message, в проде — убрать
-                return StatusCode(500, new { message = "Внутренняя ошибка сервера", debug: ex.Message });
-            }
+            return Ok(new { message = "Пользователь успешно зарегистрирован" });
         }
     }
 }

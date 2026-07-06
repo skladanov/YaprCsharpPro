@@ -4,7 +4,7 @@ namespace Application.Services
 {
     public interface IUserService
     {
-        Task RegisterAsync(String login, UserRole role, String password, CancellationToken token);
-        Task<string> LoginAsync(String login, String password, CancellationToken token);
+        Task RegisterAsync(RegisterRequest request, CancellationToken token);
+        Task<string> LoginAsync(LoginRequest request, CancellationToken token);
     }
 }
