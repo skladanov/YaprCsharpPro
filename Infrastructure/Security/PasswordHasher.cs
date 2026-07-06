@@ -1,8 +1,5 @@
-﻿using Application.Services;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
-
-namespace Infrastructure.Security;
 
 public class PasswordHasher : IPasswordHasher
 {

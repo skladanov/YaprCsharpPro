@@ -1,8 +1,5 @@
-using Application.Extensions;
-using Application.Services;
-using Infrastructure.DataAccess;
+
 using Infrastructure.Extensions;
-using Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;

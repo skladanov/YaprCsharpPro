@@ -1,6 +1,3 @@
-using Domain.Exceptions;
-using Domain.Models;
-
 public class Booking
 {
     public Guid Id { get; init; }

@@ -1,14 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Security.Cryptography;
-using System.Text;
-
-namespace Application.Services
+﻿public interface IPasswordHasher
 {
-    public interface IPasswordHasher
-    {
-        byte[] Hash(string password);
+    byte[] Hash(string password);
 
-        bool Verify(string password, byte[] storedHash);
-    }
+    bool Verify(string password, byte[] storedHash);
 }

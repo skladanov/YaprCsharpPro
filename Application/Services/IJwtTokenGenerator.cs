@@ -1,9 +1,4 @@
-﻿using Domain.Models;
-
-namespace Application.Services
+﻿public interface IJwtTokenGenerator
 {
-    public interface IJwtTokenGenerator
-    {
-        string GenerateToken(Guid userId, string login, UserRole role);
-    }
+    string GenerateToken(Guid userId, string login, UserRole role);
 }

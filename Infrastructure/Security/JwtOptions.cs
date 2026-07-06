@@ -1,6 +1,4 @@
-﻿namespace Infrastructure.Security;
-
-public class JwtOptions
+﻿public class JwtOptions
 {
     public string Secret { get; set; } = string.Empty;
     public string Issuer { get; set; } = "WebProject";

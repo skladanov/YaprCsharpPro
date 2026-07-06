@@ -1,7 +1,4 @@
-﻿using Domain.Models;
-using Microsoft.EntityFrameworkCore;
-
-namespace Infrastructure.DataAccess;
+﻿using Microsoft.EntityFrameworkCore;
 
 public class AppDbContext : DbContext
 {

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -11,9 +12,20 @@ public class BookingsController : ControllerBase
     }
 
     [HttpGet("{id:Guid}", Name = "GetBooking")]
+    [Authorize]
     public async Task<ActionResult<Booking>> GetBooking(Guid id, CancellationToken token)
     {
+        var userId = GetCurrentUserId();
+        if (userId == null)
+            return Unauthorized(new { message = "Пользователь не авторизован" });
+
         var result = await _bookingService.GetBookingByIdAsync(id, token);
         return Ok(result);
+    }
+
+    private Guid? GetCurrentUserId()
+    {
+        var claim = User.FindFirst("sub"); // стандартный claim для userId
+        return claim?.Value is string sub && Guid.TryParse(sub, out var id) ? id : null;
     }
 }
