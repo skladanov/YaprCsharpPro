@@ -60,6 +60,11 @@ public class GlobalExceptionHandlingMiddleware
             EventNotFoundException enfe => StatusCodes.Status404NotFound,
             BookingNotFoundException bnfe => StatusCodes.Status404NotFound,
             NoAvailableSeatsException nase => StatusCodes.Status409Conflict,
+            DuplicateLoginException duple => StatusCodes.Status409Conflict,
+            ActiveBookingsLimitExceededException able => StatusCodes.Status400BadRequest,
+            BookingAlreadyCancelledException bace => StatusCodes.Status400BadRequest,
+            BookingForPastEventException bpee => StatusCodes.Status400BadRequest,
+            UnauthorizedException authe => StatusCodes.Status403Forbidden,
             _ => StatusCodes.Status500InternalServerError
         };
 }
