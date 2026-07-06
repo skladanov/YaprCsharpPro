@@ -23,6 +23,31 @@ public class BookingsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost("{id:Guid}/cancel")]
+    [Authorize]
+    public async Task<IActionResult> CancelBooking(Guid bookingId, CancellationToken token)
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null) return Unauthorized();
+
+        // Получение роли из claims (пример)
+        bool isAdmin = User.IsInRole("Admin");
+
+        try
+        {
+            await _bookingService.CancelBookingAsync(id, userId.Value, isAdmin, token);
+            return NoContent();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+        catch (BookingNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
     private Guid? GetCurrentUserId()
     {
         var claim = User.FindFirst("sub"); // стандартный claim для userId

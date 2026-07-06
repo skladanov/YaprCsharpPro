@@ -6,4 +6,5 @@ public interface IBookingService
     Task BookingProcessAsync(Booking booking, CancellationToken stoppingToken);
     Task Confirm(Booking booking, CancellationToken stoppingToken);
     Task Reject(Booking booking, Event eventItem);
+    Task CancelAsync(Guid userId, Guid bookingId, CancellationToken stoppingToken);
 }

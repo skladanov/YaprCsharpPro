@@ -5,12 +5,12 @@ public class BookingService : IBookingService
 {
     private readonly IBookingRepository _bookingRepository;
     private readonly IEventRepository _eventRepository;
-    private readonly IUserService _userRepository;
+    private readonly IUserRepository _userRepository;
     private readonly ILogger<BookingService> _logger;
     private readonly object _bookingLock = new object();
     private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
 
-    public BookingService(IBookingRepository bookingRepository, IEventRepository eventRepository, IUserService userRepository, ILogger<BookingService> logger)
+    public BookingService(IBookingRepository bookingRepository, IEventRepository eventRepository, IUserRepository userRepository, ILogger<BookingService> logger)
     {
         _bookingRepository = bookingRepository;
         _eventRepository = eventRepository;
@@ -36,13 +36,16 @@ public class BookingService : IBookingService
             if (existsEvent == null)
                 throw new EventNotFoundException(eventId);
 
-            if (existsEvent.EndAt < DateTime.UtcNow)
+            if (existsEvent.StartAt < DateTime.UtcNow)
                 throw new BookingForPastEventException(bookingId, existsEvent.Id);
 
             bool isReserved = existsEvent.TryReserveSeats();
-
             if (!isReserved)
                 throw new NoAvailableSeatsException(eventId);
+
+            var activeBookings = await CountActiveBookingsByUserAsync(userId, token);
+            if (activeBookings >= 10)
+                throw new ActiveBookingsLimitExceededException(bookingId, userId);
 
             await _eventRepository.UpdateEventAsync(existsEvent, token);
 
@@ -115,12 +118,25 @@ public class BookingService : IBookingService
 
     public async Task<List<Booking>?> GetPendingsAsync(CancellationToken stoppingToken)
     {
-        Expression<Func<Booking, bool>> predicate = e =>
-        (e.Status == Booking.BookingStatus.Pending);
+        Expression<Func<Booking, bool>> predicate = b =>
+        (b.Status == Booking.BookingStatus.Pending);
 
         var result = await _bookingRepository.GetBookingsAsync(predicate, stoppingToken);
 
         return result;
+    }
+
+    public async Task<int> CountActiveBookingsByUserAsync(Guid userId, CancellationToken stoppingToken)
+    {
+        Expression<Func<Booking, bool>> predicate = b =>
+        (b.UserId == userId && b.Status == Booking.BookingStatus.Cancelled && b.Status != Booking.BookingStatus.Rejected);
+
+        var result = await _bookingRepository.GetBookingsAsync(predicate, stoppingToken);
+
+        if (result == null)
+            return 0;
+
+        return result.Count;
     }
 
     public async Task Confirm(Booking booking, CancellationToken stoppingToken)
@@ -139,6 +155,22 @@ public class BookingService : IBookingService
         booking.Reject();
 
         await _bookingRepository.UpdateBookingAsync(booking, CancellationToken.None);
+
+        if (eventItem == null)
+            return;
+
+        eventItem.ReleaseSeats();
+
+        await _eventRepository.UpdateEventAsync(eventItem, CancellationToken.None);
+    }
+
+    public async Task CancelAsync(Guid userId, Guid bookingId, CancellationToken stoppingToken)
+    {
+        await Task.Delay(TimeSpan.FromSeconds(2));
+
+        booking.Cancel();
+
+        await _bookingRepository.UpdateBookingAsync(booking, stoppingToken);
 
         if (eventItem == null)
             return;
