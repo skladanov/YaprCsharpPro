@@ -126,7 +126,34 @@ public class BookingService : IBookingService
         return result;
     }
 
-    public async Task<int> CountActiveBookingsByUserAsync(Guid userId, CancellationToken stoppingToken)
+    public async Task CancelAsync(Guid bookingId, CancellationToken stoppingToken)
+    {
+        await Task.Delay(TimeSpan.FromSeconds(2));
+
+        var booking = await _bookingRepository.GetBookingByIdAsync(bookingId, stoppingToken);
+        if (booking == null)
+            throw new BookingNotFoundException(bookingId);
+
+        Event? eventItem = null;
+        if (booking.Status == Booking.BookingStatus.Pending || booking.Status == Booking.BookingStatus.Confirmed)
+        {
+            eventItem = await _eventRepository.GetEventAsync(booking.EventId, stoppingToken);
+            // Если событие не найдено — всё равно отменяем бронь, но не трогаем места
+        }
+
+        booking.Cancel();
+
+        await _bookingRepository.UpdateBookingAsync(booking, stoppingToken);
+
+        if (eventItem == null)
+            return;
+
+        eventItem.ReleaseSeats();
+
+        await _eventRepository.UpdateEventAsync(eventItem, CancellationToken.None);
+    }
+
+    private async Task<int> CountActiveBookingsByUserAsync(Guid userId, CancellationToken stoppingToken)
     {
         Expression<Func<Booking, bool>> predicate = b =>
         (b.UserId == userId && b.Status == Booking.BookingStatus.Cancelled && b.Status != Booking.BookingStatus.Rejected);
@@ -155,22 +182,6 @@ public class BookingService : IBookingService
         booking.Reject();
 
         await _bookingRepository.UpdateBookingAsync(booking, CancellationToken.None);
-
-        if (eventItem == null)
-            return;
-
-        eventItem.ReleaseSeats();
-
-        await _eventRepository.UpdateEventAsync(eventItem, CancellationToken.None);
-    }
-
-    public async Task CancelAsync(Guid userId, Guid bookingId, CancellationToken stoppingToken)
-    {
-        await Task.Delay(TimeSpan.FromSeconds(2));
-
-        booking.Cancel();
-
-        await _bookingRepository.UpdateBookingAsync(booking, stoppingToken);
 
         if (eventItem == null)
             return;
