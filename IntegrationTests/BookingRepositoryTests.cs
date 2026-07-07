@@ -5,10 +5,12 @@ using Xunit;
 public class BookingRepositoryTests : IClassFixture<DatabaseFixture>
 {
     private readonly DatabaseFixture _fixture;
+    private readonly Guid _userId;
 
     public BookingRepositoryTests(DatabaseFixture fixture)
     {
         _fixture = fixture;
+        _userId = Guid.NewGuid();
     }
 
     [Fact]
@@ -30,7 +32,7 @@ public class BookingRepositoryTests : IClassFixture<DatabaseFixture>
         context.events.Add(mockEvent);
         
         var bookingId = Guid.NewGuid();
-        Booking booking = Booking.Create(bookingId, eventId);
+        Booking booking = Booking.Create(_userId, bookingId, eventId);
         
         await context.SaveChangesAsync();
         
@@ -65,7 +67,7 @@ public class BookingRepositoryTests : IClassFixture<DatabaseFixture>
         context.events.Add(mockEvent);
         
         var bookingId = Guid.NewGuid();
-        Booking booking = Booking.Create(bookingId, eventId);
+        Booking booking = Booking.Create(_userId, bookingId, eventId);
         context.bookings.Add(booking);
         
         await context.SaveChangesAsync();
@@ -99,9 +101,9 @@ public class BookingRepositoryTests : IClassFixture<DatabaseFixture>
         );
         context.events.Add(mockEvent);
         
-        Booking booking1 = Booking.Create(Guid.NewGuid(), eventId);
-        Booking booking2 = Booking.Create(Guid.NewGuid(), eventId);
-        Booking booking3 = Booking.Create(Guid.NewGuid(), eventId);
+        Booking booking1 = Booking.Create(_userId, Guid.NewGuid(), eventId);
+        Booking booking2 = Booking.Create(_userId, Guid.NewGuid(), eventId);
+        Booking booking3 = Booking.Create(_userId, Guid.NewGuid(), eventId);
         context.bookings.Add(booking1);
         context.bookings.Add(booking2);
         context.bookings.Add(booking3);
@@ -140,7 +142,7 @@ public class BookingRepositoryTests : IClassFixture<DatabaseFixture>
         context.events.Add(mockEvent);
         
         var bookingId = Guid.NewGuid();
-        Booking booking = Booking.Create(bookingId, eventId);
+        Booking booking = Booking.Create(_userId, bookingId, eventId);
         context.bookings.Add(booking);
         
         await context.SaveChangesAsync();

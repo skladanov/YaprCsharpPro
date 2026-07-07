@@ -10,7 +10,7 @@ public class BookingServiceTests
     private readonly Mock<IUserRepository> _mockUserRepository;
     private readonly Mock<ILogger<BookingService>> _mockBookingLogger;
     private readonly IBookingService _service;
-    private readonly Guid userId;
+    private readonly Guid _userId;
 
     public BookingServiceTests()
     {
@@ -18,6 +18,7 @@ public class BookingServiceTests
         _mockEventRepository = new Mock<IEventRepository>();
         _mockUserRepository = new Mock<IUserRepository>();
         _mockBookingLogger = new Mock<ILogger<BookingService>>();
+        _userId = Guid.NewGuid();
         _service = new BookingService(_mockBookingRepository.Object, _mockEventRepository.Object, _mockUserRepository.Object, _mockBookingLogger.Object);
     }
     //Успешные сценарии:
@@ -33,17 +34,19 @@ public class BookingServiceTests
         Event mockEvent = Event.Create(
             eventId,
             "Title",
-            DateTime.UtcNow,
             DateTime.UtcNow.AddDays(1),
+            DateTime.UtcNow.AddDays(2),
             10
         );
 
         int? availableSeatsBefore = mockEvent.AvailableSeats;
 
         Booking? capturedBooking = null;
+        List<Booking> bookingsList = null;
 
         _mockEventRepository.Setup(s => s.GetEventAsync(eventId, default)).ReturnsAsync(mockEvent);
         _mockEventRepository.Setup(s => s.UpdateEventAsync(mockEvent, default));
+        _mockBookingRepository.Setup(r => r.GetBookingsAsync(It.IsAny<Expression<Func<Booking, bool>>>(), default)).ReturnsAsync(bookingsList);
         _mockBookingRepository.Setup(r => r.CreateBookingAsync(It.IsAny<Booking>(), default))
             .Callback<Booking, CancellationToken>((booking, _) =>
             {
@@ -51,11 +54,12 @@ public class BookingServiceTests
             });
 
         // Act
-        var result = await _service.CreateBookingAsync(eventId, default);
+        var result = await _service.CreateBookingAsync(_userId, eventId, default);
 
         // Assert
         _mockEventRepository.Verify(s => s.GetEventAsync(eventId, default),Times.Once());
         _mockEventRepository.Verify(s => s.UpdateEventAsync(mockEvent, default), Times.Once());
+        _mockBookingRepository.Verify(r => r.GetBookingsAsync(It.IsAny<Expression<Func<Booking, bool>>>(), default), Times.Once);
         _mockBookingRepository.Verify(r => r.CreateBookingAsync(It.IsAny<Booking>(), default), Times.Once());    
 
         Assert.Equal(capturedBooking.Id, result);
@@ -85,10 +89,10 @@ public class BookingServiceTests
         _mockBookingRepository.Setup(r => r.CreateBookingAsync(It.IsAny<Booking>(), default));
 
         // Act
-        var result1 = await _service.CreateBookingAsync(eventId, default);
-        var result2 = await _service.CreateBookingAsync(eventId, default);
+        var result1 = await _service.CreateBookingAsync(_userId, eventId, default);
+        var result2 = await _service.CreateBookingAsync(_userId, eventId, default);
         var ex = await Assert.ThrowsAsync<NoAvailableSeatsException>(
-           async () => await _service.CreateBookingAsync(eventId, default));
+           async () => await _service.CreateBookingAsync(_userId, eventId, default));
 
         // Assert
         _mockEventRepository.Verify(s => s.GetEventAsync(eventId, default), Times.Exactly(3));
@@ -118,7 +122,7 @@ public class BookingServiceTests
 
         mockEvent.TryReserveSeats();
 
-        var initialBooking = Booking.Create(bookingId, eventId);
+        var initialBooking = Booking.Create(_userId, eventId, default);
         var mockListPendingBokkings = new List<Booking> { initialBooking };
 
         _mockBookingRepository.Setup(br => br.GetBookingByIdAsync(bookingId, default)).ReturnsAsync(initialBooking);
@@ -169,7 +173,7 @@ public class BookingServiceTests
 
         mockEvent.TryReserveSeats();
 
-        var initialBooking = Booking.Create(bookingId, eventId);
+        var initialBooking = Booking.Create(_userId, eventId, default);
         var mockListPendingBokkings = new List<Booking> { initialBooking };
 
         _mockBookingRepository.Setup(br => br.GetBookingByIdAsync(bookingId, default)).ReturnsAsync(initialBooking);
@@ -218,7 +222,7 @@ public class BookingServiceTests
 
         // Assert
         var ex = await Assert.ThrowsAsync<EventNotFoundException>(
-            async () => await _service.CreateBookingAsync(eventId, default));
+            async () => await _service.CreateBookingAsync(_userId, eventId, default));
 
         _mockEventRepository.Verify(s => s.GetEventAsync(eventId, default), Times.Once());
         _mockEventRepository.Verify(s => s.UpdateEventAsync(It.IsAny<Event>(), default), Times.Never);
@@ -267,7 +271,7 @@ public class BookingServiceTests
 
         // Act
         var ex = await Assert.ThrowsAsync<NoAvailableSeatsException>(
-           async () => await _service.CreateBookingAsync(eventId, default));
+           async () => await _service.CreateBookingAsync(_userId, eventId, default));
 
         // Assert
         _mockEventRepository.Verify(s => s.GetEventAsync(eventId, default), Times.Once);
@@ -305,7 +309,7 @@ public class BookingServiceTests
                 {
                     try
                     {
-                        var result = await _service.CreateBookingAsync(eventId, default);
+                        var result = await _service.CreateBookingAsync(_userId, eventId, default);
                         return (Success: true, Id: result, Exception: (Exception)null);
                     }
                     catch (NoAvailableSeatsException ex)
@@ -352,7 +356,7 @@ public class BookingServiceTests
         // Act
         // Создаём и запускаем конкурентные запросы
         var tasks = Enumerable.Range(0, 10)
-            .Select(_ => _service.CreateBookingAsync(eventId, default))
+            .Select(_ => _service.CreateBookingAsync(_userId, eventId, default))
             .ToArray();
 
         // Act
