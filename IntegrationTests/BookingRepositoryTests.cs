@@ -32,7 +32,7 @@ public class BookingRepositoryTests : IClassFixture<DatabaseFixture>
         context.events.Add(mockEvent);
         
         var bookingId = Guid.NewGuid();
-        Booking booking = Booking.Create(_userId, bookingId, eventId);
+        Booking booking = Booking.Create(bookingId, _userId, eventId);
         
         await context.SaveChangesAsync();
         
@@ -67,7 +67,7 @@ public class BookingRepositoryTests : IClassFixture<DatabaseFixture>
         context.events.Add(mockEvent);
         
         var bookingId = Guid.NewGuid();
-        Booking booking = Booking.Create(_userId, bookingId, eventId);
+        Booking booking = Booking.Create(bookingId, _userId, eventId);
         context.bookings.Add(booking);
         
         await context.SaveChangesAsync();
@@ -101,9 +101,9 @@ public class BookingRepositoryTests : IClassFixture<DatabaseFixture>
         );
         context.events.Add(mockEvent);
         
-        Booking booking1 = Booking.Create(_userId, Guid.NewGuid(), eventId);
-        Booking booking2 = Booking.Create(_userId, Guid.NewGuid(), eventId);
-        Booking booking3 = Booking.Create(_userId, Guid.NewGuid(), eventId);
+        Booking booking1 = Booking.Create(Guid.NewGuid(), _userId, eventId);
+        Booking booking2 = Booking.Create(Guid.NewGuid(), _userId, eventId);
+        Booking booking3 = Booking.Create(Guid.NewGuid(), _userId, eventId);
         context.bookings.Add(booking1);
         context.bookings.Add(booking2);
         context.bookings.Add(booking3);
@@ -142,7 +142,7 @@ public class BookingRepositoryTests : IClassFixture<DatabaseFixture>
         context.events.Add(mockEvent);
         
         var bookingId = Guid.NewGuid();
-        Booking booking = Booking.Create(_userId, bookingId, eventId);
+        Booking booking = Booking.Create(bookingId, _userId, eventId);
         context.bookings.Add(booking);
         
         await context.SaveChangesAsync();
