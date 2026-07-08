@@ -79,8 +79,8 @@ public class BookingServiceTests
         Event mockEvent = Event.Create(
             eventId,
             "Title",
-            DateTime.UtcNow,
             DateTime.UtcNow.AddDays(1),
+            DateTime.UtcNow.AddDays(2),
             2
         );
 
@@ -115,14 +115,14 @@ public class BookingServiceTests
         Event mockEvent = Event.Create(
             eventId,
             "Title",
-            DateTime.UtcNow,
             DateTime.UtcNow.AddDays(1),
+            DateTime.UtcNow.AddDays(2),
             10
         );
 
         mockEvent.TryReserveSeats();
 
-        var initialBooking = Booking.Create(_userId, eventId, default);
+        var initialBooking = Booking.Create(bookingId, _userId, eventId);
         var mockListPendingBokkings = new List<Booking> { initialBooking };
 
         _mockBookingRepository.Setup(br => br.GetBookingByIdAsync(bookingId, default)).ReturnsAsync(initialBooking);
@@ -166,14 +166,14 @@ public class BookingServiceTests
         Event mockEvent = Event.Create(
             eventId,
             "Title",
-            DateTime.UtcNow,
             DateTime.UtcNow.AddDays(1),
+            DateTime.UtcNow.AddDays(2),
             10
         );
 
         mockEvent.TryReserveSeats();
 
-        var initialBooking = Booking.Create(_userId, eventId, default);
+        var initialBooking = Booking.Create(bookingId, _userId, eventId);
         var mockListPendingBokkings = new List<Booking> { initialBooking };
 
         _mockBookingRepository.Setup(br => br.GetBookingByIdAsync(bookingId, default)).ReturnsAsync(initialBooking);
@@ -258,8 +258,8 @@ public class BookingServiceTests
         Event mockEvent = Event.Create(
             eventId,
             "Title",
-            DateTime.UtcNow,
             DateTime.UtcNow.AddDays(1),
+            DateTime.UtcNow.AddDays(2),
             1
         );
 
@@ -291,8 +291,8 @@ public class BookingServiceTests
         Event mockEvent = Event.Create(
             eventId,
             "Title",
-            DateTime.UtcNow,
             DateTime.UtcNow.AddDays(1),
+            DateTime.UtcNow.AddDays(2),
             5
         );
 
@@ -344,8 +344,8 @@ public class BookingServiceTests
         Event mockEvent = Event.Create(
             eventId,
             "Title",
-            DateTime.UtcNow,
             DateTime.UtcNow.AddDays(1),
+            DateTime.UtcNow.AddDays(2),
             10
         );
 
