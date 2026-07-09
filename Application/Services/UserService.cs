@@ -39,13 +39,26 @@ public class UserService : IUserService
 
         var hash = _passwordHasher.Hash(request.Password);
 
+        var role = ParseRole(request.Role);
+
         var newUser = User.Create(
             id: Guid.NewGuid(),
             login: request.Login,
             passwordHash: hash,
-            role: request.Role ?? UserRole.User
+            role: role
         );
 
         await _repository.AddUserAsync(newUser, token);
+    }
+
+    private UserRole ParseRole (string role)
+    {
+        if (string.IsNullOrWhiteSpace(role))
+            return UserRole.User;
+
+        if (Enum.TryParse<UserRole>(role, ignoreCase: true, out var result))
+            return result;
+
+        throw new ArgumentException($"Недопустимая роль '{role}'. Доступные: User, Admin.");
     }
 }
