@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System.Linq.Expressions;
 using static Booking;
@@ -7,7 +8,6 @@ public class BookingServiceTests
 {
     private readonly Mock<IBookingRepository> _mockBookingRepository;
     private readonly Mock<IEventRepository> _mockEventRepository;
-    private readonly Mock<IUserRepository> _mockUserRepository;
     private readonly Mock<ILogger<BookingService>> _mockBookingLogger;
     private readonly IBookingService _service;
     private readonly Guid _userId;
@@ -16,10 +16,9 @@ public class BookingServiceTests
     {
         _mockBookingRepository = new Mock<IBookingRepository>();
         _mockEventRepository = new Mock<IEventRepository>();
-        _mockUserRepository = new Mock<IUserRepository>();
         _mockBookingLogger = new Mock<ILogger<BookingService>>();
         _userId = Guid.NewGuid();
-        _service = new BookingService(_mockBookingRepository.Object, _mockEventRepository.Object, _mockUserRepository.Object, _mockBookingLogger.Object);
+        _service = new BookingService(_mockBookingRepository.Object, _mockEventRepository.Object, _mockBookingLogger.Object);
     }
     //Успешные сценарии:
 
@@ -275,6 +274,129 @@ public class BookingServiceTests
 
         // Assert
         _mockEventRepository.Verify(s => s.GetEventAsync(eventId, default), Times.Once);
+        _mockEventRepository.Verify(s => s.UpdateEventAsync(mockEvent, default), Times.Never);
+        _mockBookingRepository.Verify(s => s.CreateBookingAsync(It.IsAny<Booking>(), default), Times.Never);
+    }
+
+    // попытка забронировать прошедшее событие приводит к ошибке
+    [Fact]
+    public async Task CreateBooking_ForPastEvent_ThrowsException()
+    {
+        // Arrange
+        var eventId = Guid.NewGuid();
+
+        Event mockEvent = Event.Create(
+            eventId,
+            "Title",
+            DateTime.UtcNow.AddDays(-2),
+            DateTime.UtcNow.AddDays(-1),
+            10
+        );
+
+        mockEvent.TryReserveSeats();
+
+        _mockEventRepository.Setup(s => s.GetEventAsync(eventId, default)).ReturnsAsync(mockEvent);
+        _mockEventRepository.Setup(s => s.UpdateEventAsync(mockEvent, default));
+        _mockBookingRepository.Setup(r => r.CreateBookingAsync(It.IsAny<Booking>(), default));
+
+        // Act
+        var ex = await Assert.ThrowsAsync<BookingForPastEventException>(
+           async () => await _service.CreateBookingAsync(_userId, eventId, default));
+
+        // Assert
+        _mockEventRepository.Verify(s => s.GetEventAsync(eventId, default), Times.Once);
+        _mockEventRepository.Verify(s => s.UpdateEventAsync(mockEvent, default), Times.Never);
+        _mockBookingRepository.Verify(s => s.CreateBookingAsync(It.IsAny<Booking>(), default), Times.Never);
+    }
+
+    // при достижении лимита активных броней новая бронь не создаётся
+    [Fact]
+    public async Task CreateBooking_ExceedsActiveLimit_ThrowsException()
+    {
+        // Arrange
+        var eventId = Guid.NewGuid();
+
+        Event mockEvent = Event.Create(
+            eventId,
+            "Title",
+            DateTime.UtcNow.AddDays(1),
+            DateTime.UtcNow.AddDays(2),
+            10
+        );
+
+        // Создаём ровно лимит активных броней
+        int activeLimit = 9;
+
+        List<Booking> bookingsList = new List<Booking>();
+        
+        for (int i = 0; i < activeLimit; i++)
+        {
+            var bookingId = Guid.NewGuid();
+            Booking booking = Booking.Create(bookingId, _userId, eventId);
+            booking.Confirm(); // или оставь Pending, если лимит считается по Pending
+            bookingsList.Add(booking);
+        }
+
+        mockEvent.TryReserveSeats();
+
+        _mockEventRepository.Setup(s => s.GetEventAsync(eventId, default)).ReturnsAsync(mockEvent);
+        _mockBookingRepository.Setup(s =>s.GetBookingsAsync(It.IsAny<Expression<Func<Booking, bool>>>(), default)).ReturnsAsync(bookingsList);
+        _mockEventRepository.Setup(s => s.UpdateEventAsync(mockEvent, default));
+        _mockBookingRepository.Setup(r => r.CreateBookingAsync(It.IsAny<Booking>(), default));
+
+        // Act
+        var ex = await Assert.ThrowsAsync<ActiveBookingsLimitExceededException>(
+           async () => await _service.CreateBookingAsync(_userId, eventId, default));
+
+        // Assert
+        _mockEventRepository.Verify(s => s.GetEventAsync(eventId, default), Times.Once);
+        _mockBookingRepository.Verify(s => s.GetBookingsAsync(It.IsAny<Expression<Func<Booking, bool>>>(), default), Times.Once);
+        _mockEventRepository.Verify(s => s.UpdateEventAsync(mockEvent, default), Times.Never);
+        _mockBookingRepository.Verify(s => s.CreateBookingAsync(It.IsAny<Booking>(), default), Times.Never);
+    }
+
+    // лимиты разных пользователей не влияют друг на друга
+    [Fact]
+    public async Task CreateBooking_DifferentUsers_LimitsAreIndependent()
+    {
+        // Arrange
+        var eventId = Guid.NewGuid();
+
+        Event mockEvent = Event.Create(
+            eventId,
+            "Title",
+            DateTime.UtcNow.AddDays(1),
+            DateTime.UtcNow.AddDays(2),
+            10
+        );
+
+        // Создаём ровно лимит активных броней
+        int activeLimit = 9;
+
+        List<Booking> bookingsList = new List<Booking>();
+
+        for (int i = 0; i < activeLimit; i++)
+        {
+            var bookingId = Guid.NewGuid();
+            Booking booking = Booking.Create(bookingId, _userId, eventId);
+            booking.Confirm(); // или оставь Pending, если лимит считается по Pending
+            bookingsList.Add(booking);
+        }
+
+        mockEvent.TryReserveSeats();
+
+        _mockEventRepository.Setup(s => s.GetEventAsync(eventId, default)).ReturnsAsync(mockEvent);
+        _mockBookingRepository.Setup(s => s.GetBookingsAsync(It.IsAny<Expression<Func<Booking, bool>>>(), default)).ReturnsAsync(bookingsList);
+        _mockEventRepository.Setup(s => s.UpdateEventAsync(mockEvent, default));
+        _mockBookingRepository.Setup(r => r.CreateBookingAsync(It.IsAny<Booking>(), default));
+
+        // Act
+        var ex = await Assert.ThrowsAsync<ActiveBookingsLimitExceededException>(
+           async () => await _service.CreateBookingAsync(_userId, eventId, default));
+
+        // Assert
+        _mockEventRepository.Verify(s => s.GetEventAsync(eventId, default), Times.Once);
+        _mockBookingRepository.Verify(s => s.GetBookingsAsync(It.IsAny<Expression<Func<Booking, bool>>>(), default), Times.Once);
         _mockEventRepository.Verify(s => s.UpdateEventAsync(mockEvent, default), Times.Never);
         _mockBookingRepository.Verify(s => s.CreateBookingAsync(It.IsAny<Booking>(), default), Times.Never);
     }
