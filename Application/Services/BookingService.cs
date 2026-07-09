@@ -5,16 +5,15 @@ public class BookingService : IBookingService
 {
     private readonly IBookingRepository _bookingRepository;
     private readonly IEventRepository _eventRepository;
-    private readonly IUserRepository _userRepository;
     private readonly ILogger<BookingService> _logger;
     private readonly object _bookingLock = new object();
     private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
+    private readonly int _activeLimit = 9;
 
-    public BookingService(IBookingRepository bookingRepository, IEventRepository eventRepository, IUserRepository userRepository, ILogger<BookingService> logger)
+    public BookingService(IBookingRepository bookingRepository, IEventRepository eventRepository, ILogger<BookingService> logger)
     {
         _bookingRepository = bookingRepository;
         _eventRepository = eventRepository;
-        _userRepository = userRepository;
         _logger = logger;
     }
 
@@ -44,7 +43,7 @@ public class BookingService : IBookingService
                 throw new NoAvailableSeatsException(eventId);
 
             var activeBookings = await CountActiveBookingsByUserAsync(userId, token);
-            if (activeBookings >= 10)
+            if (activeBookings >= _activeLimit)
                 throw new ActiveBookingsLimitExceededException(bookingId, userId);
 
             await _eventRepository.UpdateEventAsync(existsEvent, token);
@@ -156,7 +155,7 @@ public class BookingService : IBookingService
     private async Task<int> CountActiveBookingsByUserAsync(Guid userId, CancellationToken stoppingToken)
     {
         Expression<Func<Booking, bool>> predicate = b =>
-        (b.UserId == userId && b.Status == Booking.BookingStatus.Cancelled && b.Status != Booking.BookingStatus.Rejected);
+        (b.UserId == userId && b.Status != Booking.BookingStatus.Cancelled && b.Status != Booking.BookingStatus.Rejected);
 
         var result = await _bookingRepository.GetBookingsAsync(predicate, stoppingToken);
 
