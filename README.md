@@ -19,6 +19,14 @@ Presentation — контроллеры (эндпоинты), HTTP-маппин�
 
 ## Функциональность
 
+* Swagger UI - `/swagger/index.html`
+
+API предоставляет операции для работы с сервисом авторизации:
+
+* **POST** `/api/auth/register` — регистрация пользователя с ролью User или Admin
+
+* **POST** `/api/auth/login` — авторизация, получение JWT-токена
+
 API предоставляет CRUD‑операции для работы с событиями:
 
 * **GET** `/api/events?[title=...]&[from=...]&[to=...]&[page=...]&[pageSize=...]` — получить события
@@ -36,13 +44,15 @@ API предоставляет CRUD‑операции для работы с с
 
 * **DELETE** `/api/events/{id}` — удалить событие
 
-* Swagger UI - `/swagger/index.html`
+
 
 API предоставляет операции для работы с сервисом бронирования:
 
 * **POST** `/api/events/{id}/book` — создать бронь по ID события
 
 * **GET** `/api/bookings/{id}` — получить бронь по ID
+
+* **GET** `/api/bookings/{id}/cancel` — отмена брони
 
 Формат ответа при ошибках соответствует стандарту RFC7807 ProblemDetails
 
@@ -62,10 +72,9 @@ API предоставляет операции для работы с серв�
    cd YaprCsharpPro
    ```
 
-2. Соберите и запустите проект:
+2. Соберите проект:
    ```bash
    dotnet build
-   dotnet run --project Presentation/WebProject.csproj
    ```
 
 3. Запустите тесты (для интеграциооных тестов нужен Docker):
@@ -73,7 +82,13 @@ API предоставляет операции для работы с серв�
    dotnet test
    ```
 
-4. Схема управляется миграциями EF Core:
+4. Запустите проект:
+   ```bash
+   dotnet run --project Presentation/WebProject.csproj
+   ```
+
+
+5. Схема управляется миграциями EF Core:
    ```bash
    dotnet ef migrations add WebProjectDB --project Infrastructure --startup-project Presentation
    dotnet ef database update --project Infrastructure --startup-project Presentation
