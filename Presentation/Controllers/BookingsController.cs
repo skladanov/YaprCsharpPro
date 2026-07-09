@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -24,8 +25,8 @@ public class BookingsController : ControllerBase
     }
 
     [HttpPost("{id:Guid}/cancel")]
-    [Authorize]
-    public async Task<IActionResult> CancelBooking(Guid bookingId, CancellationToken token)
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> CancelBooking(Guid id, CancellationToken token)
     {
         var userId = GetCurrentUserId();
         if (userId == null) return Unauthorized();
@@ -36,13 +37,17 @@ public class BookingsController : ControllerBase
         if (!isAdmin)
             return Forbid();
 
-        await _bookingService.CancelAsync(bookingId, token);
+        await _bookingService.CancelAsync(id, token);
         return NoContent();
     }
 
     private Guid? GetCurrentUserId()
     {
-        var claim = User.FindFirst("sub"); // стандартный claim для userId
-        return claim?.Value is string sub && Guid.TryParse(sub, out var id) ? id : null;
+        var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+        if (claim?.Value is not string idString)
+            return null;
+
+        return Guid.TryParse(idString, out var id) ? id : null;
     }
 }

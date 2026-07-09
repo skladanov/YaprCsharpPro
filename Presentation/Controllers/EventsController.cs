@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -16,13 +17,13 @@ public class EventsController : ControllerBase
 
     [HttpPost("{id:Guid}/book")]
     [Authorize]
-    public async Task<IActionResult> CreateBooking(Guid eventId, CancellationToken token)
+    public async Task<IActionResult> CreateBooking(Guid id, CancellationToken token)
     {
         var userId = GetCurrentUserId();
         if (userId == null)
             return Unauthorized(new { message = "Пользователь не авторизован" });
 
-        var result = await _bookingService.CreateBookingAsync(userId.Value, eventId, token);
+        var result = await _bookingService.CreateBookingAsync(userId.Value, id, token);
 
         return AcceptedAtRoute(
             nameof(BookingsController.GetBooking),
@@ -90,7 +91,11 @@ public class EventsController : ControllerBase
 
     private Guid? GetCurrentUserId()
     {
-        var claim = User.FindFirst("sub");
-        return claim?.Value is string sub && Guid.TryParse(sub, out var id) ? id : null;
+        var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+        if (claim?.Value is not string idString)
+            return null;
+
+        return Guid.TryParse(idString, out var id) ? id : null;
     }
 }
