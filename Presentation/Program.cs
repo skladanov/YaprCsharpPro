@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
-builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt")); 
 builder.Services.AddSingleton<IJwtTokenGenerator>(sp =>
 {
     var options = sp.GetRequiredService<IOptions<JwtOptions>>().Value;
@@ -39,14 +39,11 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = issuer,
         ValidAudience = audience,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
-        NameClaimType = "sub",
-        RoleClaimType = "role"
+        IssuerSigningKey = new SymmetricSecurityKey(key)
     };
 });
 
 builder.Services.AddApplication(builder.Configuration);
-//builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Logging.AddConsole();
