@@ -10,6 +10,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IEventService, EventService>();
         services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IUserService, UserService>();
 
         services.AddHostedService<BookingProcessService>();
 
