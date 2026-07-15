@@ -125,13 +125,19 @@ public class BookingService : IBookingService
         return result;
     }
 
-    public async Task CancelAsync(Guid bookingId, CancellationToken stoppingToken)
+    public async Task CancelAsync(Guid bookingId, Guid currentUserId, bool isAdmin, CancellationToken stoppingToken)
     {
         await Task.Delay(TimeSpan.FromSeconds(2));
 
         var booking = await _bookingRepository.GetBookingByIdAsync(bookingId, stoppingToken);
         if (booking == null)
             throw new BookingNotFoundException(bookingId);
+
+        if (!isAdmin && booking.UserId != currentUserId)
+        {
+            // Пользователь пытается отменить чужую бронь и не является админом
+            throw new  ForbiddenException(currentUserId);
+        }
 
         Event? eventItem = null;
         if (booking.Status == Booking.BookingStatus.Pending || booking.Status == Booking.BookingStatus.Confirmed)

@@ -34,10 +34,7 @@ public class BookingsController : ControllerBase
         // Получение роли из claims (пример)
         bool isAdmin = User.IsInRole("Admin");
 
-        if (!isAdmin)
-            return Forbid();
-
-        await _bookingService.CancelAsync(id, token);
+        await _bookingService.CancelAsync(id, userId.Value, isAdmin, token);
         return NoContent();
     }
 
