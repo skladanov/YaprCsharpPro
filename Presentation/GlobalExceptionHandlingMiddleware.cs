@@ -63,7 +63,7 @@ public class GlobalExceptionHandlingMiddleware
             ActiveBookingsLimitExceededException able => StatusCodes.Status400BadRequest,
             BookingAlreadyCancelledException bace => StatusCodes.Status400BadRequest,
             BookingForPastEventException bpee => StatusCodes.Status400BadRequest,
-            UnauthorizedException authe => StatusCodes.Status403Forbidden,
+            ForbiddenException authe => StatusCodes.Status403Forbidden,
             _ => StatusCodes.Status500InternalServerError
         };
 }
