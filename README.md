@@ -52,7 +52,7 @@ API предоставляет операции для работы с серв�
 
 * **GET** `/api/bookings/{id}` — получить бронь по ID
 
-* **GET** `/api/bookings/{id}/cancel` — отмена брони
+* **DELETE** `/api/bookings/{id}/cancel` — отмена брони
 
 Формат ответа при ошибках соответствует стандарту RFC7807 ProblemDetails
 
