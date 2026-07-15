@@ -325,7 +325,7 @@ public class BookingServiceTests
         );
 
         // Создаём ровно лимит активных броней
-        int activeLimit = 9;
+        int activeLimit = 10;
 
         List<Booking> bookingsList = new List<Booking>();
         
@@ -371,7 +371,7 @@ public class BookingServiceTests
         );
 
         // Создаём ровно лимит активных броней
-        int activeLimit = 9;
+        int activeLimit = 10;
 
         List<Booking> bookingsList = new List<Booking>();
 

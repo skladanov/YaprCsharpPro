@@ -183,7 +183,7 @@ public class BookingRepositoryTests : IClassFixture<DatabaseFixture>
     [Fact]
     public async Task CreateBooking_DifferentUsers_LimitsAreIndependent()
     {
-        const int activeLimit = 9;
+        const int activeLimit = 10;
 
         await _fixture.ResetDatabaseAsync();
 

@@ -8,7 +8,7 @@ public class BookingService : IBookingService
     private readonly ILogger<BookingService> _logger;
     private readonly object _bookingLock = new object();
     private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
-    private readonly int _activeLimit = 9;
+    private readonly int _activeLimit = 10;
 
     public BookingService(IBookingRepository bookingRepository, IEventRepository eventRepository, ILogger<BookingService> logger)
     {
