@@ -494,4 +494,117 @@ public class BookingServiceTests
 
         Assert.Equal(10, uniqueIds.Count);
     }
+
+    // Пользователь отменяет свою бронь
+    [Fact]
+    public async Task CancelBooking_UserCancelsOwnBooking_BookingCancelled()
+    {
+        // Arrange
+        var eventId = Guid.NewGuid();
+
+        Event mockEvent = Event.Create(
+            eventId,
+            "Title",
+            DateTime.UtcNow.AddDays(1),
+            DateTime.UtcNow.AddDays(2),
+            10
+        );
+
+        mockEvent.TryReserveSeats();
+
+        var bookingId = Guid.NewGuid();
+
+        Booking mockBooking = Booking.Create(bookingId, _userId, eventId);
+
+        _mockBookingRepository.Setup(r => r.GetBookingByIdAsync(It.IsAny<Guid>(), default)).ReturnsAsync(mockBooking);
+        _mockEventRepository.Setup(s => s.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(mockEvent);
+        _mockBookingRepository.Setup(r => r.UpdateBookingAsync(It.IsAny<Booking>(), default));
+        _mockEventRepository.Setup(s => s.UpdateEventAsync(It.IsAny<Event>(), default));
+
+        // Act
+        await _service.CancelAsync(bookingId, _userId, false, default);
+
+        // Assert
+        _mockBookingRepository.Verify(s => s.GetBookingByIdAsync(It.IsAny<Guid>(), default), Times.Once);
+        _mockEventRepository.Verify(s => s.GetEventAsync(It.IsAny<Guid>(), default), Times.Once);
+        _mockBookingRepository.Verify(s => s.UpdateBookingAsync(It.IsAny<Booking>(), default), Times.Once);
+        _mockEventRepository.Verify(s => s.UpdateEventAsync(It.IsAny<Event>(), default), Times.Once);
+
+        Assert.Equal(mockBooking.Status, Booking.BookingStatus.Cancelled);
+        Assert.Equal(mockEvent.AvailableSeats, 10);
+    }
+
+    // Admin отменяет бронь
+    [Fact]
+    public async Task CancelBooking_AdminCancelsBooking_BookingCancelled()
+    {
+        // Arrange
+        var eventId = Guid.NewGuid();
+
+        Event mockEvent = Event.Create(
+            eventId,
+            "Title",
+            DateTime.UtcNow.AddDays(1),
+            DateTime.UtcNow.AddDays(2),
+            10
+        );
+
+        mockEvent.TryReserveSeats();
+
+        var bookingId = Guid.NewGuid();
+
+        Booking mockBooking = Booking.Create(bookingId, _userId, eventId);
+
+        var adminId = Guid.NewGuid();
+
+        _mockBookingRepository.Setup(r => r.GetBookingByIdAsync(It.IsAny<Guid>(), default)).ReturnsAsync(mockBooking);
+        _mockEventRepository.Setup(s => s.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(mockEvent);
+        _mockBookingRepository.Setup(r => r.UpdateBookingAsync(It.IsAny<Booking>(), default));
+        _mockEventRepository.Setup(s => s.UpdateEventAsync(It.IsAny<Event>(), default));
+
+        // Act
+        await _service.CancelAsync(bookingId, adminId, true, default);
+
+        // Assert
+        _mockBookingRepository.Verify(s => s.GetBookingByIdAsync(It.IsAny<Guid>(), default), Times.Once);
+        _mockEventRepository.Verify(s => s.GetEventAsync(It.IsAny<Guid>(), default), Times.Once);
+        _mockBookingRepository.Verify(s => s.UpdateBookingAsync(It.IsAny<Booking>(), default), Times.Once);
+        _mockEventRepository.Verify(s => s.UpdateEventAsync(It.IsAny<Event>(), default), Times.Once);
+
+        Assert.Equal(mockBooking.Status, Booking.BookingStatus.Cancelled);
+        Assert.Equal(mockEvent.AvailableSeats, 10);
+    }
+
+    // Пользователь отменяет чужую бронь
+    [Fact]
+    public async Task CancelBooking_UserCancelsOthersBooking_ThrowsForbidden()
+    {
+        // Arrange
+        var eventId = Guid.NewGuid();
+
+        Event mockEvent = Event.Create(
+            eventId,
+            "Title",
+            DateTime.UtcNow.AddDays(1),
+            DateTime.UtcNow.AddDays(2),
+            10
+        );
+
+        mockEvent.TryReserveSeats();
+
+        var bookingId = Guid.NewGuid();
+
+        Booking mockBooking = Booking.Create(bookingId, _userId, eventId);
+
+        var otherUserId = Guid.NewGuid();
+
+        _mockBookingRepository.Setup(r => r.GetBookingByIdAsync(It.IsAny<Guid>(), default)).ReturnsAsync(mockBooking);
+        _mockEventRepository.Setup(s => s.GetEventAsync(It.IsAny<Guid>(), default)).ReturnsAsync(mockEvent);
+        _mockBookingRepository.Setup(r => r.UpdateBookingAsync(It.IsAny<Booking>(), default));
+        _mockEventRepository.Setup(s => s.UpdateEventAsync(It.IsAny<Event>(), default));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ForbiddenException>(
+           async () => await _service.CancelAsync(bookingId, otherUserId, false, default));
+    }
 }
