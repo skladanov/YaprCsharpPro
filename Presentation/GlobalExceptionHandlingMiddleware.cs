@@ -60,10 +60,11 @@ public class GlobalExceptionHandlingMiddleware
             BookingNotFoundException bnfe => StatusCodes.Status404NotFound,
             NoAvailableSeatsException nase => StatusCodes.Status409Conflict,
             DuplicateLoginException duple => StatusCodes.Status409Conflict,
-            ActiveBookingsLimitExceededException able => StatusCodes.Status400BadRequest,
+            ActiveBookingsLimitExceededException able => StatusCodes.Status409Conflict,
             BookingAlreadyCancelledException bace => StatusCodes.Status400BadRequest,
             BookingForPastEventException bpee => StatusCodes.Status400BadRequest,
-            ForbiddenException authe => StatusCodes.Status403Forbidden,
+            ForbiddenException frbe => StatusCodes.Status403Forbidden,
+            UnauthorizedAccessException uauth => StatusCodes.Status404NotFound,
             _ => StatusCodes.Status500InternalServerError
         };
 }
