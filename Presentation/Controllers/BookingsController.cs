@@ -4,6 +4,7 @@ using System.Security.Claims;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class BookingsController : ControllerBase
 {
     private readonly IBookingService _bookingService;
@@ -24,7 +25,7 @@ public class BookingsController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("{id:Guid}/cancel")]
+    [HttpDelete("{id:Guid}/cancel")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CancelBooking(Guid id, CancellationToken token)
     {

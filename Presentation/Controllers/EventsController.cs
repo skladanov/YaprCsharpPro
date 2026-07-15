@@ -5,6 +5,7 @@ using System.Security.Claims;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class EventsController : ControllerBase
 {
     private readonly IEventService _eventService;
