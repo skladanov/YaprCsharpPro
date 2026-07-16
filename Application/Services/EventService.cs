@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
-
 public class EventService : IEventService
 {
     private readonly IEventRepository _repository;

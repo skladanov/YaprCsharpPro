@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 
 public class GlobalExceptionHandlingMiddleware
 {
@@ -60,6 +59,12 @@ public class GlobalExceptionHandlingMiddleware
             EventNotFoundException enfe => StatusCodes.Status404NotFound,
             BookingNotFoundException bnfe => StatusCodes.Status404NotFound,
             NoAvailableSeatsException nase => StatusCodes.Status409Conflict,
+            DuplicateLoginException duple => StatusCodes.Status409Conflict,
+            ActiveBookingsLimitExceededException able => StatusCodes.Status409Conflict,
+            BookingAlreadyCancelledException bace => StatusCodes.Status400BadRequest,
+            BookingForPastEventException bpee => StatusCodes.Status400BadRequest,
+            ForbiddenException frbe => StatusCodes.Status403Forbidden,
+            UnauthorizedAccessException uauth => StatusCodes.Status404NotFound,
             _ => StatusCodes.Status500InternalServerError
         };
 }

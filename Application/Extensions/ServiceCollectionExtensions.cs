@@ -1,21 +1,19 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Application.Extensions
+public static class ServiceCollectionExtensions
 {
-    public static class ServiceCollectionExtensions
+    public static IServiceCollection AddApplication(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
-        public static IServiceCollection AddApplication(
-            this IServiceCollection services,
-            IConfiguration configuration)
-        {
 
-            services.AddScoped<IEventService, EventService>();
-            services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IEventService, EventService>();
+        services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IUserService, UserService>();
 
-            services.AddHostedService<BookingProcessService>();
+        services.AddHostedService<BookingProcessService>();
 
-            return services;
-        }
+        return services;
     }
 }

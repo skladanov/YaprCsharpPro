@@ -1,11 +1,10 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
-using Infrastructure.DataAccess;
 
 namespace Infrastructure.Extensions
 {
-    public static class ServiceCollectionExtensions
+    public static class RepositoryCollectionExtensions
     {
         public static IServiceCollection AddInfrastructure(
             this IServiceCollection services,
@@ -17,6 +16,8 @@ namespace Infrastructure.Extensions
 
             services.AddScoped<IEventRepository, EventRepository>();
             services.AddScoped<IBookingRepository, BookingRepository>();
+            services.AddScoped<IPasswordHasher, PasswordHasher>();
+            services.AddScoped<IUserRepository, UserRepository>();
 
             return services;
         }

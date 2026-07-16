@@ -1,9 +1,11 @@
-using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class EventsController : ControllerBase
 {
     private readonly IEventService _eventService;
@@ -15,9 +17,14 @@ public class EventsController : ControllerBase
     }
 
     [HttpPost("{id:Guid}/book")]
+    [Authorize]
     public async Task<IActionResult> CreateBooking(Guid id, CancellationToken token)
     {
-        var result = await _bookingService.CreateBookingAsync(id, token);
+        var userId = GetCurrentUserId();
+        if (userId == null)
+            return Unauthorized(new { message = "Пользователь не авторизован" });
+
+        var result = await _bookingService.CreateBookingAsync(userId.Value, id, token);
 
         return AcceptedAtRoute(
             nameof(BookingsController.GetBooking),
@@ -27,6 +34,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<ActionResult<ICollection<Event>>> GetAllEvents(
         [FromQuery] string? title = null, 
         [FromQuery] DateTime? from = null,
@@ -40,14 +48,19 @@ public class EventsController : ControllerBase
     }
 
     [HttpGet("{id:Guid}")]
+    [Authorize]
     public async Task<ActionResult<Event>> GetEvent(Guid id, CancellationToken token)
     {
-        var result = await _eventService.GetEventAsync(id, token);
+        var userId = GetCurrentUserId();
+        if (userId == null)
+            return Unauthorized(new { message = "Пользователь не авторизован" });
 
+        var result = await _eventService.GetEventAsync(id, token);
         return Ok(result);
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<Event>> AddEvent([FromBody] CreateEvent newEventData, CancellationToken token)
     {
         var newEventId = await _eventService.AddEventAsync(newEventData, token);
@@ -60,6 +73,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpPut("{id:Guid}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateEvent([FromBody] UpdateEvent newEventData, Guid id, CancellationToken token)
     {
         await _eventService.UpdateEventAsync(newEventData, id, token);
@@ -68,10 +82,21 @@ public class EventsController : ControllerBase
     }
 
     [HttpDelete("{id:Guid}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken token)
     {
         await _eventService.DeleteEventAsync(id, token);
 
         return Ok(new { message = $"Event with ID {id} successfully deleted" });
+    }
+
+    private Guid? GetCurrentUserId()
+    {
+        var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+        if (claim?.Value is not string idString)
+            return null;
+
+        return Guid.TryParse(idString, out var id) ? id : null;
     }
 }

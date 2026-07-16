@@ -1,6 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
-
 public class Booking
 {
     public Guid Id { get; init; }
@@ -8,11 +5,13 @@ public class Booking
     public DateTime CreatedAt { get; private set; }
     public DateTime? ProcessedAt { get; private set; }
     public Guid EventId {  get; init; }
+    public Guid UserId { get; init; }
     public Event? Event { get; private set; }
-    
+    public User? User { get; private set; }
+
     private Booking() { }
 
-    public static Booking Create(Guid id, Guid eventId)
+    public static Booking Create(Guid id, Guid userId, Guid eventId)
     {
         if (id == Guid.Empty) 
             throw new ArgumentNullException("BookingID cannot be null or empty", nameof(id));
@@ -20,9 +19,13 @@ public class Booking
         if (eventId == Guid.Empty)
             throw new ArgumentNullException("EventID cannot be null or empty", nameof(id));
 
+        if (userId == Guid.Empty)
+            throw new ArgumentNullException("UserID cannot be null or empty", nameof(id));
+
         return new Booking()
         {
             Id = id,
+            UserId = userId,
             EventId = eventId,
             Status = BookingStatus.Pending,
             CreatedAt = DateTime.UtcNow
@@ -41,10 +44,20 @@ public class Booking
         ProcessedAt = null;
     }
 
+    public void Cancel()
+    {
+        if (Status == BookingStatus.Cancelled)
+            throw new BookingAlreadyCancelledException(Id);
+
+        Status = BookingStatus.Cancelled;
+        ProcessedAt = null;
+    }
+
     public enum BookingStatus
     {
         Pending,
         Confirmed,
-        Rejected
+        Rejected,
+        Cancelled
     }
 }
