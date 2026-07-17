@@ -1,0 +1,1 @@
+﻿public record BookingCanceledEvent(Guid EventId, int SeatsCount);

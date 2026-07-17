@@ -1,0 +1,1 @@
+﻿public record BookingRejectedEvent(Guid BookingId);

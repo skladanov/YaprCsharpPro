@@ -1,0 +1,1 @@
+﻿public record BookingCreatedEvent(Guid EventId, int SeatsCount);
