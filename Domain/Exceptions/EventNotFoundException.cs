@@ -1,8 +1,0 @@
-public class EventNotFoundException : BusinessException
-{
-    public EventNotFoundException()
-        : base("Event not found") { }
-
-    public EventNotFoundException(Guid eventId)
-        : base($"Event with ID {eventId} not found") { }
-}
