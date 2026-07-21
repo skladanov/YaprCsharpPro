@@ -13,6 +13,8 @@ builder.Services.AddSingleton<IEventProducer, EventProducer>();
 
 builder.Services.AddHostedService<EventConsumer>();
 
+builder.Services.Configure<KafkaOptions>(builder.Configuration.GetSection("Kafka"));
+
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt")); 
