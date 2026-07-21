@@ -84,7 +84,10 @@ API предоставляет операции для работы с серв�
 
 4. Запустите проект:
    ```bash
-   dotnet run --project Presentation/WebProject.csproj
+   docker-compose up -d
+   dotnet run --project UserService/Presentation/UserPresentation.csproj
+   dotnet run --project EventService/Presentation/EventPresentation.csproj
+   dotnet run --project BookingService/Presentation/BookingPresentation.csproj
    ```
 
 
