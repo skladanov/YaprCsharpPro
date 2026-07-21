@@ -1,6 +1,6 @@
-# WebProject API — ASP.NET Core Web API
+# BookingService API — ASP.NET Core Web API
 
-RESTful API для управления событиями (Events) на базе ASP.NET Core.
+RESTful API сервиса бронирования (Booking) на базе ASP.NET Core.
 
 Приложение состоит из 4х слоев:
 Domain — доменные сущности: event, booking; доменные исключения.
@@ -8,8 +8,8 @@ Application — use cases, сервисы, интерфейсы репозито
 Infrastructure — реализации портов: репозитории, DbContext, конфигурации базы, миграции.
 Presentation — контроллеры (эндпоинты), HTTP-маппинг, регистрация зависимостей.
 
-## Технологии
 
+## Технологии
 
 * ASP.NET Core 9.0+
 * Swagger/OpenAPI для документации
@@ -17,34 +17,10 @@ Presentation — контроллеры (эндпоинты), HTTP-маппин�
 * EF Core
 * Docker
 
+
 ## Функциональность
 
 * Swagger UI - `/swagger/index.html`
-
-API предоставляет операции для работы с сервисом авторизации:
-
-* **POST** `/api/auth/register` — регистрация пользователя с ролью User или Admin
-
-* **POST** `/api/auth/login` — авторизация, получение JWT-токена
-
-API предоставляет CRUD‑операции для работы с событиями:
-
-* **GET** `/api/events?[title=...]&[from=...]&[to=...]&[page=...]&[pageSize=...]` — получить события
-   - title (опц.) — фильтр по названию события;
-   - from (опц.) — дата начала (YYYY‑MM‑DD);
-   - to (опц.) — дата окончания (YYYY‑MM‑DD);
-   - page (опц., по умолчанию: 1) — номер страницы;
-   - pageSize (опц., по умолчанию: 10) — количество элементов на странице.
-
-* **GET** `/api/events/{id}` — получить событие по ID
-
-* **POST** `/api/events` — создать новое событие
-
-* **PUT** `/api/events/{id}` — обновить событие
-
-* **DELETE** `/api/events/{id}` — удалить событие
-
-
 
 API предоставляет операции для работы с сервисом бронирования:
 
@@ -56,8 +32,8 @@ API предоставляет операции для работы с серв�
 
 Формат ответа при ошибках соответствует стандарту RFC7807 ProblemDetails
 
-## Быстрый старт
 
+## Быстрый старт
 
 ### Предварительные требования
 
@@ -77,20 +53,15 @@ API предоставляет операции для работы с серв�
    dotnet build
    ```
 
-3. Запустите тесты (для интеграциооных тестов нужен Docker):
+3. Запустите проект:
    ```bash
-   dotnet test
-   ```
-
-4. Запустите проект:
-   ```bash
-   dotnet run --project Presentation/WebProject.csproj
+   dotnet run --project Presentation/BookingPresentation.csproj
    ```
 
 
-5. Схема управляется миграциями EF Core:
+4. Схема управляется миграциями EF Core:
    ```bash
-   dotnet ef migrations add WebProjectDB --project Infrastructure --startup-project Presentation
+   dotnet ef migrations add BookingProjectDB --project Infrastructure --startup-project Presentation
    dotnet ef database update --project Infrastructure --startup-project Presentation
    dotnet ef database update <PreviousMigration> --project Infrastructure --startup-project Presentation
    dotnet ef migrations remove --project Infrastructure --startup-project Presentation
