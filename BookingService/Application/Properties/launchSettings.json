@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "BookingApplication": {
+      "commandName": "Project"
+    }
+  }
+}
