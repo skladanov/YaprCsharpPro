@@ -30,7 +30,7 @@ public class BookingService : IBookingService
         await _bookingRepository.CreateBookingAsync(newBooking, token);
 
         await _producer.PublishAsync(
-            new BookingCreatedEvent(eventId, SeatsCount: 1),
+            new BookingCreatedEvent(bookingId, eventId, SeatsCount: 1),
             token
         );
 
@@ -74,7 +74,7 @@ public class BookingService : IBookingService
         await _bookingRepository.UpdateBookingAsync(booking, token);
 
         await _producer.PublishAsync(
-            new BookingCanceledEvent(booking.EventId, 1),
+            new BookingCanceledEvent(booking.EventId, SeatsCount: 1),
             token
         );
 
