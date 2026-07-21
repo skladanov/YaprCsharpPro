@@ -1,22 +1,17 @@
 ﻿using Confluent.Kafka;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json.Linq;
 using System.Text.Json;
 
-public class EventConsumer : IHostedService
+public class EventConsumer : BackgroundService
 {
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IEventProducer _producer;
     private readonly ILogger<EventConsumer> _logger;
     private readonly KafkaOptions _kafkaOptions;
-
     private IConsumer<Ignore, string>? _consumer;
-    private Task? _consumeTask;
-    private CancellationTokenRegistration? _cancellation;
 
     public EventConsumer(
         IServiceScopeFactory serviceScopeFactory,
@@ -30,12 +25,10 @@ public class EventConsumer : IHostedService
         _logger = logger;
     }
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         if (string.IsNullOrWhiteSpace(_kafkaOptions.BootstrapServer))
             throw new InvalidOperationException("KafkaOptions.BootstrapServer is required");
-
-        _cancellation = cancellationToken.Register(() => { });
 
         var config = new ConsumerConfig
         {
@@ -49,128 +42,103 @@ public class EventConsumer : IHostedService
         };
 
         _consumer = new ConsumerBuilder<Ignore, string>(config).Build();
-
-        // Подписываемся на топики из Shared.Contracts
-        var topics = new List<string>
-        {
-            BookingTopic.Created,
-            BookingTopic.Cancelled
-        };
-
+        var topics = new[] { BookingTopic.Created, BookingTopic.Cancelled };
         _consumer.Subscribe(topics);
-
-        _consumeTask = Task.Run(() => ConsumeLoop(cancellationToken), cancellationToken);
-        return Task.CompletedTask;
-    }
-
-    private void ConsumeLoop(CancellationToken ct)
-    {
-        while (!ct.IsCancellationRequested)
-        {
-            try
-            {
-                var consumeResult = _consumer?.Consume(ct);
-                if (consumeResult?.Message == null) continue;
-
-                var evt = DeserializeEvent(consumeResult.Message.Value);
-                if (evt == null)
-                {
-                    _logger.LogWarning(
-                        "Unknown or invalid event in topic '{Topic}' at offset {Offset}",
-                        consumeResult.Topic, consumeResult.Offset);
-                    _consumer?.Commit(consumeResult);
-                    continue;
-                }
-
-                HandleEventAsync(evt, ct).Wait(ct);
-
-                _consumer?.Commit(consumeResult); // коммит только после успеха
-            }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
-            {
-                break;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error while consuming Kafka message");
-                // НЕ делаем коммит — сообщение придёт снова (retry)
-            }
-        }
-    }
-
-    private object? DeserializeEvent(string? json)
-    {
-        if (string.IsNullOrWhiteSpace(json)) return null;
 
         try
         {
-            if (TryDeserialize<BookingCreatedEvent>(json, out var confirmed)) return confirmed;
-            if (TryDeserialize<BookingCancelledEvent>(json, out var rejected)) return rejected;
-            return null;
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    var consumeResult = await Task.Run(() => _consumer.Consume(stoppingToken), stoppingToken);
+
+                    if (consumeResult?.Message == null) continue;
+
+                    switch (consumeResult.Topic)
+                    {
+                        case var topic when topic == BookingTopic.Created:
+                            var created = JsonSerializer
+                                .Deserialize<BookingCreatedEvent>(
+                                consumeResult.Message.Value,
+                                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                                );
+                            if (created == null) continue;
+                            await HandleCreatedAsync(created, stoppingToken);
+                            _consumer.Commit(consumeResult);
+                            break;
+
+                        case var topic when topic == BookingTopic.Cancelled:
+                            var canceled = JsonSerializer
+                                .Deserialize<BookingCanceledEvent>(
+                                consumeResult.Message.Value,
+                                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                                );
+                            if (canceled == null) continue;
+                            await HandleCanceledAsync(canceled, stoppingToken);
+                            _consumer.Commit(consumeResult);
+                            break;
+
+                        default: continue;
+                    }
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (ConsumeException ex)
+                {
+                    _logger.LogError(ex, "Kafka consumer error: {Reason}", ex.Error.Reason);
+                }
+            }
         }
-        catch (JsonException ex)
+        finally
         {
-            _logger.LogError(ex, "Failed to deserialize Kafka message");
-            return null;
+            _consumer?.Close();
+            _consumer?.Dispose();
         }
     }
 
-    private bool TryDeserialize<T>(string json, out T? result) where T : class
-    {
-        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-        result = JsonSerializer.Deserialize<T>(json, options);
-        return result != null;
-    }
-
-    private async Task HandleEventAsync(object evt, CancellationToken ct)
+    private async Task HandleCreatedAsync(BookingCreatedEvent created, CancellationToken ct)
     {
         using var scope = _serviceScopeFactory.CreateScope();
         var repo = scope.ServiceProvider.GetRequiredService<IEventRepository>();
 
-        if (evt is BookingCreatedEvent created)
+        _logger.LogInformation("BookingCreatedEvent!");
+
+        var @event = await repo.GetEventAsync(created.EventId, ct);
+
+        if (@event == null)
         {
-            var @event = await repo.GetEventAsync(created.EventId, ct);
-
-            if (@event == null) 
-            {
-                await _producer.PublishAsync(new BookingRejectedEvent(created.EventId), ct);
-                return;
-            }
-
-            if (!@event.TryReserveSeats(created.SeatsCount))
-            {
-                await _producer.PublishAsync(new BookingRejectedEvent(created.EventId), ct);
-                return;
-            }
-
-            await repo.UpdateEventAsync(@event, ct);
+            await _producer.PublishAsync(new BookingRejectedEvent(created.BookingId), ct);
+            return;
         }
-        else if (evt is BookingCancelledEvent cancelled)
+
+        if (!@event.TryReserveSeats(created.SeatsCount))
         {
-            var @event = await repo.GetEventAsync(cancelled.EventId, ct);
-
-            if (@event == null) return;
-
-            @event.ReleaseSeats(cancelled.SeatsCount);
-
-            await repo.UpdateEventAsync(@event, ct);
+            await _producer.PublishAsync(new BookingRejectedEvent(created.BookingId), ct);
+            return;
         }
+
+        await repo.UpdateEventAsync(@event, ct);
+
+        await _producer.PublishAsync(new BookingConfirmedEvent(created.BookingId), ct);
     }
 
-    public async Task StopAsync(CancellationToken cancellationToken)
+
+    private async Task HandleCanceledAsync(BookingCanceledEvent evt, CancellationToken ct)
     {
-        _cancellation?.Dispose();
+        using var scope = _serviceScopeFactory.CreateScope();
+        var repo = scope.ServiceProvider.GetRequiredService<IEventRepository>();
 
-        if (_consumer != null)
-        {
-            _consumer.Close(); // graceful shutdown
-            _consumer.Dispose();
-            _consumer = null;
-        }
+        _logger.LogInformation("BookingCanceledEvent!");
 
-        if (_consumeTask != null)
-        {
-            await _consumeTask.WaitAsync(cancellationToken).ConfigureAwait(false);
-        }
+        var canceledEvent = await repo.GetEventAsync(evt.EventId, ct);
+
+        if (canceledEvent == null) return;
+
+        canceledEvent.ReleaseSeats(evt.SeatsCount);
+
+        await repo.UpdateEventAsync(canceledEvent, ct);
     }
 }
