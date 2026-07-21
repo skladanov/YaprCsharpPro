@@ -1,1 +1,1 @@
-﻿public record BookingCreatedEvent(Guid EventId, int SeatsCount);
+﻿public record BookingCreatedEvent(Guid BookingId, Guid EventId, int SeatsCount);
