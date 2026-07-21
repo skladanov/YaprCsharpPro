@@ -1,4 +1,4 @@
-# WebProject API — ASP.NET Core Web API
+# EventService API — ASP.NET Core Web API
 
 RESTful API для управления событиями (Events) на базе ASP.NET Core.
 
@@ -8,8 +8,8 @@ Application — use cases, сервисы, интерфейсы репозито
 Infrastructure — реализации портов: репозитории, DbContext, конфигурации базы, миграции.
 Presentation — контроллеры (эндпоинты), HTTP-маппинг, регистрация зависимостей.
 
-## Технологии
 
+## Технологии
 
 * ASP.NET Core 9.0+
 * Swagger/OpenAPI для документации
@@ -17,15 +17,10 @@ Presentation — контроллеры (эндпоинты), HTTP-маппин�
 * EF Core
 * Docker
 
+
 ## Функциональность
 
 * Swagger UI - `/swagger/index.html`
-
-API предоставляет операции для работы с сервисом авторизации:
-
-* **POST** `/api/auth/register` — регистрация пользователя с ролью User или Admin
-
-* **POST** `/api/auth/login` — авторизация, получение JWT-токена
 
 API предоставляет CRUD‑операции для работы с событиями:
 
@@ -44,24 +39,14 @@ API предоставляет CRUD‑операции для работы с с
 
 * **DELETE** `/api/events/{id}` — удалить событие
 
-
-
-API предоставляет операции для работы с сервисом бронирования:
-
-* **POST** `/api/events/{id}/book` — создать бронь по ID события
-
-* **GET** `/api/bookings/{id}` — получить бронь по ID
-
-* **DELETE** `/api/bookings/{id}/cancel` — отмена брони
-
 Формат ответа при ошибках соответствует стандарту RFC7807 ProblemDetails
+
 
 ## Быстрый старт
 
-
 ### Предварительные требования
 
-* .NET 9.0 SDK
+* .NET 10.0 SDK
 * IDE (Visual Studio, VS Code или Rider)
 
 ### Запуск проекта
@@ -69,7 +54,7 @@ API предоставляет операции для работы с серв�
 1. Клонируйте репозиторий:
    ```bash
    git clone https://github.com/skladanov/YaprCsharpPro.git
-   cd YaprCsharpPro
+   cd YaprCsharpPro/EventService
    ```
 
 2. Соберите проект:
@@ -77,20 +62,14 @@ API предоставляет операции для работы с серв�
    dotnet build
    ```
 
-3. Запустите тесты (для интеграциооных тестов нужен Docker):
+3. Запустите проект:
    ```bash
-   dotnet test
+   dotnet run --project Presentation/EventPresentation.csproj
    ```
 
-4. Запустите проект:
+4. Схема управляется миграциями EF Core:
    ```bash
-   dotnet run --project Presentation/WebProject.csproj
-   ```
-
-
-5. Схема управляется миграциями EF Core:
-   ```bash
-   dotnet ef migrations add WebProjectDB --project Infrastructure --startup-project Presentation
+   dotnet ef migrations add EventProjectDB --project Infrastructure --startup-project Presentation
    dotnet ef database update --project Infrastructure --startup-project Presentation
    dotnet ef database update <PreviousMigration> --project Infrastructure --startup-project Presentation
    dotnet ef migrations remove --project Infrastructure --startup-project Presentation
