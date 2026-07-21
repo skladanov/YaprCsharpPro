@@ -8,14 +8,15 @@ Application — use cases, сервисы, интерфейсы репозито
 Infrastructure — реализации портов: репозитории, DbContext, конфигурации базы, миграции.
 Presentation — контроллеры (эндпоинты), HTTP-маппинг, регистрация зависимостей.
 
-## Технологии
 
+## Технологии
 
 * ASP.NET Core 9.0+
 * Swagger/OpenAPI для документации
 * PostgreSQL
 * EF Core
 * Docker
+
 
 ## Функциональность
 
@@ -30,8 +31,8 @@ API предоставляет операции для работы с серв�
 
 Формат ответа при ошибках соответствует стандарту RFC7807 ProblemDetails
 
-## Быстрый старт
 
+## Быстрый старт
 
 ### Предварительные требования
 
@@ -51,20 +52,14 @@ API предоставляет операции для работы с серв�
    dotnet build
    ```
 
-3. Запустите тесты (для интеграциооных тестов нужен Docker):
+3. Запустите проект:
    ```bash
-   ????dotnet test
+   dotnet run --project Presentation/UserPresentation.csproj
    ```
 
-4. Запустите проект:
+4. Схема управляется миграциями EF Core:
    ```bash
-   dotnet run --project Presentation/Presentation.csproj
-   ```
-
-
-5. Схема управляется миграциями EF Core:
-   ```bash
-   dotnet ef migrations add UsersDB --project Infrastructure --startup-project Presentation
+   dotnet ef migrations add UsersProjectDB --project Infrastructure --startup-project Presentation
    dotnet ef database update --project Infrastructure --startup-project Presentation
    dotnet ef database update <PreviousMigration> --project Infrastructure --startup-project Presentation
    dotnet ef migrations remove --project Infrastructure --startup-project Presentation
