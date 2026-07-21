@@ -13,7 +13,7 @@ public class BookingsController : ControllerBase
         _bookingService = bookingService;
     }
 
-    [HttpPost("event/{eventId:Guid}/book")]
+    [HttpPost("/api/events/{eventId:Guid}/book")]
     [Authorize]
     public async Task<IActionResult> CreateBooking(Guid eventId, CancellationToken token)
     {
