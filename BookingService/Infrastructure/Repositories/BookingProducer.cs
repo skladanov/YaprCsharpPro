@@ -1,31 +1,35 @@
-﻿using Microsoft.Extensions.Configuration;
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
+using Microsoft.Extensions.Options;
 
-public class BookingProducer : IBookingProducer
+public class BookingProducer : IBookingProducer, IDisposable
 {
     private readonly ProducerConfig _config;
     private readonly string _topicPrefix = "booking";
+    private readonly ProducerBuilder<string, string> _producerBuilder;
+    private IProducer<string, string>? _producer;
+    private bool _disposed;
 
-    public BookingProducer(IConfiguration configuration)
+    public BookingProducer(IOptions<KafkaOptions> kafkaOptions)
     {
-        _config = new ProducerConfig
+        var config = new ProducerConfig
         {
-            BootstrapServers = configuration["Kafka:BootstrapServers"] ?? "localhost:9092",
-            ClientId = "booking-service-producer",
-            // Для локальной разработки можно отключить некоторые проверки безопасности
-            // SecurityProtocol = SecurityProtocol.SaslSsl,
-            // SaslMechanism = SaslMechanism.Plain,
-            // SaslUsername = "...",
-            // SaslPassword = "...",
+            BootstrapServers = kafkaOptions.Value.BootstrapServer,
+            ClientId = kafkaOptions.Value.ClientId,
+            // Для продакшена: SecurityProtocol, SaslMechanism и т.д.
         };
+
+        _producerBuilder = new ProducerBuilder<string, string>(config);
+        _producer = _producerBuilder.Build();
     }
 
     public async Task PublishAsync(object evt, CancellationToken token)
     {
+        if (_disposed || _producer == null)
+            throw new ObjectDisposedException(nameof(BookingProducer));
         var topic = evt switch
         {
-            BookingCreatedEvent _ => $"{_topicPrefix}.created",
-            BookingCanceledEvent _ => $"{_topicPrefix}.canceled",
+            BookingCreatedEvent _ => BookingTopic.Created,
+            BookingCancelledEvent _ => BookingTopic.Cancelled,
             _ => throw new ArgumentException("Unknown event type")
         };
 
@@ -37,5 +41,13 @@ public class BookingProducer : IBookingProducer
             Key = evt.GetType().Name,
             Value = json
         }, token);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        _producer?.Dispose();
     }
 }

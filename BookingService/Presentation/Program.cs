@@ -12,6 +12,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 
+builder.Services.Configure<KafkaOptions>(builder.Configuration.GetSection("Kafka"));
+
 builder.Services.AddSingleton<IBookingProducer, BookingProducer>();
 
 builder.Services.AddHostedService<BookingConsumer>();
@@ -20,6 +22,8 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
     ?? throw new Exception("Jwt section is missing");
+
+jwtOptions.Validate();
 
 var key = Encoding.UTF8.GetBytes(jwtOptions.Secret);
 var issuer = jwtOptions.Issuer;
