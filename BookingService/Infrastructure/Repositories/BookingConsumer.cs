@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 using System.Text.Json;
 using static Booking;
 
-public class BookingConsumer : IHostedService
+public class BookingConsumer : BackgroundService
 {
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ILogger<BookingConsumer> _logger;
@@ -27,12 +27,12 @@ public class BookingConsumer : IHostedService
         _logger = logger;
     }
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         if (string.IsNullOrWhiteSpace(_kafkaOptions.BootstrapServer))
             throw new InvalidOperationException("KafkaOptions.BootstrapServer is required");
 
-        _cancellation = cancellationToken.Register(() => { });
+        _cancellation = stoppingToken.Register(() => { });
 
         var config = new ConsumerConfig
         {
@@ -56,103 +56,94 @@ public class BookingConsumer : IHostedService
 
         _consumer.Subscribe(topics);
 
-        _consumeTask = Task.Run(() => ConsumeLoop(cancellationToken), cancellationToken);
-        return Task.CompletedTask;
-    }
-
-    private void ConsumeLoop(CancellationToken ct)
-    {
-        while (!ct.IsCancellationRequested)
-        {
-            try
-            {
-                var consumeResult = _consumer?.Consume(ct);
-                if (consumeResult?.Message == null) continue;
-
-                var evt = DeserializeEvent(consumeResult.Message.Value);
-                if (evt == null)
-                {
-                    _logger.LogWarning(
-                        "Unknown or invalid event in topic '{Topic}' at offset {Offset}",
-                        consumeResult.Topic, consumeResult.Offset);
-                    _consumer?.Commit(consumeResult);
-                    continue;
-                }
-
-                // Важно: асинхронный вызов внутри синхронного цикла
-                HandleEventAsync(evt, ct).Wait(ct);
-
-                _consumer?.Commit(consumeResult); // коммит только после успеха
-            }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
-            {
-                break;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error while consuming Kafka message");
-                // НЕ делаем коммит — сообщение придёт снова (retry)
-            }
-        }
-    }
-
-    private object? DeserializeEvent(string? json)
-    {
-        if (string.IsNullOrWhiteSpace(json)) return null;
-
         try
         {
-            if (TryDeserialize<BookingConfirmedEvent>(json, out var confirmed)) return confirmed;
-            if (TryDeserialize<BookingRejectedEvent>(json, out var rejected)) return rejected;
-            return null;
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    var consumeResult = _consumer?.Consume(stoppingToken);
+                    if (consumeResult?.Message == null) continue;
+
+                    // ОПРЕДЕЛЯЕМ ЛОГИКУ ПО ТОПИКУ
+                    switch (consumeResult.Topic)
+                    {
+                        case var topic when topic == EventTopic.Confirmed:
+                            var corfirmed = JsonSerializer
+                                .Deserialize<BookingConfirmedEvent>(
+                                consumeResult.Message.Value,
+                                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                                );
+                            if (corfirmed == null) continue;
+                            await HandleConfirmedAsync(corfirmed, stoppingToken);
+                            _consumer.Commit(consumeResult);
+                            break;
+
+                        case var topic when topic == EventTopic.Rejected:
+                            var rejected = JsonSerializer
+                                .Deserialize<BookingRejectedEvent>(
+                                consumeResult.Message.Value,
+                                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                                );
+                            if (rejected == null) continue;
+                            await HandleRejectedAsync(rejected, stoppingToken);
+                            _consumer.Commit(consumeResult);
+                            break;
+
+                        default: continue;
+                    }
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error while consuming Kafka message");
+                }
+            }
         }
-        catch (JsonException ex)
+        finally 
         {
-            _logger.LogError(ex, "Failed to deserialize Kafka message");
-            return null;
+            _consumer?.Close();
+            _consumer?.Dispose();
         }
     }
 
-    private bool TryDeserialize<T>(string json, out T? result) where T : class
-    {
-        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-        result = JsonSerializer.Deserialize<T>(json, options);
-        return result != null;
-    }
-
-    private async Task HandleEventAsync(object evt, CancellationToken ct)
+    private async Task HandleConfirmedAsync(BookingConfirmedEvent evt, CancellationToken ct)
     {
         using var scope = _serviceScopeFactory.CreateScope();
         var repo = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
 
-        if (evt is BookingConfirmedEvent confirmed)
+        var booking = await repo.GetBookingByIdAsync(evt.BookingId, ct);
+        if (booking == null) return;
+
+        if (booking.Status == BookingStatus.Confirmed)
         {
-            var booking = await repo.GetBookingByIdAsync(confirmed.BookingId, ct);
-            if (booking == null) return;
-
-            if (booking.Status == BookingStatus.Confirmed)
-            {
-                _logger.LogDebug("Booking {Id} already confirmed, skipping.", confirmed.BookingId);
-                return;
-            }
-
-            booking.Confirm();
-            await repo.UpdateBookingAsync(booking, ct);
+            _logger.LogDebug("Booking {Id} already confirmed, skipping.", evt.BookingId);
+            return;
         }
-        else if (evt is BookingRejectedEvent rejected)
+
+        booking.Confirm();
+        await repo.UpdateBookingAsync(booking, ct);
+    }
+
+    private async Task HandleRejectedAsync(BookingRejectedEvent evt, CancellationToken ct)
+    {
+        using var scope = _serviceScopeFactory.CreateScope();
+        var repo = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
+
+        var booking = await repo.GetBookingByIdAsync(evt.BookingId, ct);
+        if (booking == null) return;
+
+        if (booking.Status == BookingStatus.Rejected)
         {
-            var booking = await repo.GetBookingByIdAsync(rejected.BookingId, ct);
-            if (booking == null) return;
-
-            if (booking.Status == BookingStatus.Rejected)
-            {
-                _logger.LogDebug("Booking {Id} already rejected, skipping.", rejected.BookingId);
-                return;
-            }
-
-            booking.Reject();
-            await repo.UpdateBookingAsync(booking, ct);
+            _logger.LogDebug("Booking {Id} already rejected, skipping.", evt.BookingId);
+            return;
         }
+
+        booking.Reject();
+        await repo.UpdateBookingAsync(booking, ct);
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
