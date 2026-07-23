@@ -90,18 +90,40 @@ API предоставляет операции для работы с серв�
    dotnet build UserService
    ```
 
-4. Запустите сервисы:
+4. Запустите DB + Kafka:
    ```bash
    docker-compose up -d
+   ```
+
+5. Запустите сервисы:
+   ```bash
    dotnet run --project UserService/Presentation/UserPresentation.csproj
    dotnet run --project EventService/Presentation/EventPresentation.csproj
    dotnet run --project BookingService/Presentation/BookingPresentation.csproj
    ```
 
-5. Схема управляется миграциями EF Core:
+6. Схема управляется миграциями EF Core
+
+   EventService:
    ```bash
-   dotnet ef migrations add WebProjectDB --project Infrastructure --startup-project Presentation
-   dotnet ef database update --project Infrastructure --startup-project Presentation
-   dotnet ef database update <PreviousMigration> --project Infrastructure --startup-project Presentation
-   dotnet ef migrations remove --project Infrastructure --startup-project Presentation
-   ```
+   dotnet ef migrations add EventServiceDB --project EventService/Infrastructure --startup-project EventService/Presentation
+   dotnet ef database update --project EventService/Infrastructure --startup-project EventService/Presentation
+   dotnet ef database update <PreviousMigration> --project EventService/Infrastructure --startup-project EventService/Presentation
+   dotnet ef migrations remove --project EventService/Infrastructure --startup-project EventService/Presentation
+   ``` 
+
+   BookingService:
+   ```bash
+   dotnet ef migrations add BookingServiceDB --project BookingService/Infrastructure --startup-project BookingService/Presentation
+   dotnet ef database update --project BookingService/Infrastructure --startup-project BookingService/Presentation
+   dotnet ef database update <PreviousMigration> --project BookingService/Infrastructure --startup-project BookingService/Presentation
+   dotnet ef migrations remove --project BookingService/Infrastructure --startup-project BookingService/Presentation
+   ``` 
+
+   UserService:
+   ```bash
+   dotnet ef migrations add UserServiceDB --project UserService/Infrastructure --startup-project UserService/Presentation
+   dotnet ef database update --project UserService/Infrastructure --startup-project UserService/Presentation
+   dotnet ef database update <PreviousMigration> --project UserService/Infrastructure --startup-project UserService/Presentation
+   dotnet ef migrations remove --project UserService/Infrastructure --startup-project UserService/Presentation
+   ``` 
