@@ -1,31 +1,17 @@
 # WebProject API — ASP.NET Core Web API
 
-RESTful API для управления событиями (Events) на базе ASP.NET Core.
-
-Приложение состоит из 4х слоев:
-Domain — доменные сущности: event, booking; доменные исключения.
-Application — use cases, сервисы, интерфейсы репозитория, DTOs.
-Infrastructure — реализации портов: репозитории, DbContext, конфигурации базы, миграции.
-Presentation — контроллеры (эндпоинты), HTTP-маппинг, регистрация зависимостей.
-
 ## Технологии
-
 
 * ASP.NET Core 9.0+
 * Swagger/OpenAPI для документации
 * PostgreSQL
 * EF Core
 * Docker
+* Kafka
 
-## Функциональность
+##  Приложение состоит из 4х микросервисов:
 
-* Swagger UI - `/swagger/index.html`
-
-API предоставляет операции для работы с сервисом авторизации:
-
-* **POST** `/api/auth/register` — регистрация пользователя с ролью User или Admin
-
-* **POST** `/api/auth/login` — авторизация, получение JWT-токена
+### EventService — для управления событиями на базе ASP.NET Core
 
 API предоставляет CRUD‑операции для работы с событиями:
 
@@ -44,7 +30,12 @@ API предоставляет CRUD‑операции для работы с с
 
 * **DELETE** `/api/events/{id}` — удалить событие
 
+* Swagger UI - `/swagger/index.html`
 
+Формат ответа при ошибках соответствует стандарту RFC7807 ProblemDetails
+
+
+### BookingService - для управления бронированием на базе ASP.NET Core
 
 API предоставляет операции для работы с сервисом бронирования:
 
@@ -54,7 +45,22 @@ API предоставляет операции для работы с серв�
 
 * **DELETE** `/api/bookings/{id}/cancel` — отмена брони
 
+* Swagger UI - `/swagger/index.html`
+
 Формат ответа при ошибках соответствует стандарту RFC7807 ProblemDetails
+
+
+### UserService - для авторизации пользователей на базе ASP.NET Core
+
+API предоставляет операции для работы с сервисом авторизации:
+
+* **POST** `/api/auth/register` — регистрация пользователя с ролью User или Admin
+
+* **POST** `/api/auth/login` — авторизация, получение JWT-токена
+
+
+### Shared.Contracts - динамическа библиотека общих типов и контрактов
+ 
 
 ## Быстрый старт
 
@@ -72,26 +78,52 @@ API предоставляет операции для работы с серв�
    cd YaprCsharpPro
    ```
 
-2. Соберите проект:
+2. Соберите проект Shared.Contracts:
    ```bash
-   dotnet build
+   dotnet build Shared.Contracts
    ```
 
-3. Запустите тесты (для интеграциооных тестов нужен Docker):
+3. Соберите сервисы EventService, BookingService, UserService:
    ```bash
-   dotnet test
+   dotnet build EventService
+   dotnet build BookingService
+   dotnet build UserService
    ```
 
-4. Запустите проект:
+4. Запустите DB + Kafka:
    ```bash
-   dotnet run --project Presentation/WebProject.csproj
+   docker-compose up -d
    ```
 
-
-5. Схема управляется миграциями EF Core:
+5. Запустите сервисы:
    ```bash
-   dotnet ef migrations add WebProjectDB --project Infrastructure --startup-project Presentation
-   dotnet ef database update --project Infrastructure --startup-project Presentation
-   dotnet ef database update <PreviousMigration> --project Infrastructure --startup-project Presentation
-   dotnet ef migrations remove --project Infrastructure --startup-project Presentation
+   dotnet run --project UserService/Presentation/UserPresentation.csproj
+   dotnet run --project EventService/Presentation/EventPresentation.csproj
+   dotnet run --project BookingService/Presentation/BookingPresentation.csproj
    ```
+
+6. Схема управляется миграциями EF Core
+
+   EventService:
+   ```bash
+   dotnet ef migrations add EventServiceDB --project EventService/Infrastructure --startup-project EventService/Presentation
+   dotnet ef database update --project EventService/Infrastructure --startup-project EventService/Presentation
+   dotnet ef database update <PreviousMigration> --project EventService/Infrastructure --startup-project EventService/Presentation
+   dotnet ef migrations remove --project EventService/Infrastructure --startup-project EventService/Presentation
+   ``` 
+
+   BookingService:
+   ```bash
+   dotnet ef migrations add BookingServiceDB --project BookingService/Infrastructure --startup-project BookingService/Presentation
+   dotnet ef database update --project BookingService/Infrastructure --startup-project BookingService/Presentation
+   dotnet ef database update <PreviousMigration> --project BookingService/Infrastructure --startup-project BookingService/Presentation
+   dotnet ef migrations remove --project BookingService/Infrastructure --startup-project BookingService/Presentation
+   ``` 
+
+   UserService:
+   ```bash
+   dotnet ef migrations add UserServiceDB --project UserService/Infrastructure --startup-project UserService/Presentation
+   dotnet ef database update --project UserService/Infrastructure --startup-project UserService/Presentation
+   dotnet ef database update <PreviousMigration> --project UserService/Infrastructure --startup-project UserService/Presentation
+   dotnet ef migrations remove --project UserService/Infrastructure --startup-project UserService/Presentation
+   ``` 

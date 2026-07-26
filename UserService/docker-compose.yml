@@ -1,0 +1,20 @@
+services:
+  users-db:
+      image: postgres:18
+      container_name: users-db
+      environment:
+        POSTGRES_USER: ${DB_USER}
+        POSTGRES_PASSWORD: ${DB_PASSWORD}
+        POSTGRES_DB: ${USERS_DB_NAME}
+      ports:
+        - "${USERS_DB_EXTERNAL_PORT}:${USERS_DB_PORT}"
+      volumes:
+        - users_data:/var/lib/postgresql
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+volumes:
+  users_data:

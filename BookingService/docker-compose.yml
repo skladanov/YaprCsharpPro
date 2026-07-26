@@ -1,0 +1,20 @@
+services:
+  bookings-db:
+    image: postgres:18
+    container_name: bookings-db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${BOOKINGS_DB_NAME}
+    ports:
+      - "${BOOKINGS_DB_EXTERNAL_PORT}:${BOOKINGS_DB_PORT}"
+    volumes:
+      - bookings_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  bookings_data:

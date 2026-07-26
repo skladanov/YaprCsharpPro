@@ -5,7 +5,7 @@
 /.git
 /.github
 /.vs
-**/.vs
-**/obj
-**/bin
-**/.idea
+*/.vs
+*/obj
+*/bin
+*/.idea
