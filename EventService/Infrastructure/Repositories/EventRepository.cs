@@ -14,6 +14,15 @@ public class EventRepository : IEventRepository
         return await _context.events.AsQueryable().Where(predicate).ToListAsync(token);
     }
 
+    public async Task<ICollection<Event>> GetTop10BySalesPercentageAsync(CancellationToken token)
+    {
+        return await _context.events
+            .Where(e => e.TotalSeats > 0)
+            .OrderByDescending(e => (e.TotalSeats - e.AvailableSeats) / (double)e.TotalSeats)
+            .Take(10)
+            .ToListAsync(token);
+    }
+
     public async Task<Event?> GetEventAsync(Guid eventId, CancellationToken token)
     {
         return await _context.events.Where(e => e.Id == eventId).FirstOrDefaultAsync(token);

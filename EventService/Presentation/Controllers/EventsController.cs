@@ -28,6 +28,14 @@ public class EventsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("top")]
+    [AllowAnonymous]
+    public async Task<ActionResult<List<Event>>> GetTop10Popular(CancellationToken token)
+    {
+        var result = await _eventService.GetTop10PopularAsync(token);
+        return Ok(result);
+    }
+
     [HttpGet("{id:Guid}")]
     [Authorize]
     public async Task<ActionResult<Event>> GetEvent(Guid id, CancellationToken token)
