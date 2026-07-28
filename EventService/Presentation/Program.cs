@@ -2,12 +2,21 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using StackExchange.Redis;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var config = builder.Configuration.GetConnectionString("Redis");
+    return ConnectionMultiplexer.Connect(config);
+});
+
+builder.Services.AddScoped<IEventCacheRepository, EventCacheRepository>();
 
 builder.Services.AddSingleton<IEventProducer, EventProducer>();
 
