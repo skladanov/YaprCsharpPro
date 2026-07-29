@@ -2,10 +2,10 @@
 
 public interface IEventCacheRepository
 {
-    Task<ICollection<Event>> GetTop10PopularEventsAsync();
-    Task SetTop10PopularEventsAsync(ICollection<Event> events, TimeSpan ttl);
+    Task<ICollection<ReturnedEvent>> GetTop10PopularEventsAsync();
+    Task SetTop10PopularEventsAsync(ICollection<ReturnedEvent> events, TimeSpan ttl);
 
-    Task<Event?> GetEventByIdAsync(Guid id);
-    Task SetEventByIdAsync(Guid id, Event? eventDto, TimeSpan? ttl);
+    Task<ReturnedEvent?> GetEventByIdAsync(Guid id);
+    Task SetEventByIdAsync(Guid id, ReturnedEvent? eventDto, TimeSpan? ttl);
     Task InvalidateEventByIdAsync(Guid id);
 }

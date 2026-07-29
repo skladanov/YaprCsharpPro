@@ -15,24 +15,24 @@ public class EventCacheRepository : IEventCacheRepository
         _logger = logger;
     }
 
-    public async Task<ICollection<Event>> GetTop10PopularEventsAsync()
+    public async Task<ICollection<ReturnedEvent>> GetTop10PopularEventsAsync()
     {
         try
         {
             var raw = await _redis.StringGetAsync(Top10Key);
-            if (!raw.HasValue) return new List<Event>();
+            if (!raw.HasValue) return new List<ReturnedEvent>();
 
             var json = raw.ToString();
-            return JsonSerializer.Deserialize<List<Event>>(json, _opts) ?? new List<Event>();
+            return JsonSerializer.Deserialize<List<ReturnedEvent>>(json, _opts) ?? new List<ReturnedEvent>();
         }
         catch (RedisException ex) 
         {
             _logger.LogWarning(ex, "Redis недоступен при чтении Top10. Используем БД.");
-            return new List<Event>(); // cache miss
+            return new List<ReturnedEvent>(); // cache miss
         }
     }
 
-    public async Task SetTop10PopularEventsAsync(ICollection<Event> events, TimeSpan ttl)
+    public async Task SetTop10PopularEventsAsync(ICollection<ReturnedEvent> events, TimeSpan ttl)
     {
         try
         {
@@ -45,7 +45,7 @@ public class EventCacheRepository : IEventCacheRepository
         }
     }
 
-    public async Task<Event?> GetEventByIdAsync(Guid id)
+    public async Task<ReturnedEvent?> GetEventByIdAsync(Guid id)
     {
         try
         {
@@ -54,7 +54,7 @@ public class EventCacheRepository : IEventCacheRepository
             if (!raw.HasValue) return null;
 
             var json = raw.ToString();
-            return JsonSerializer.Deserialize<Event>(json, _opts);
+            return JsonSerializer.Deserialize<ReturnedEvent>(json, _opts);
         }
         catch (RedisException ex)
         {
@@ -63,7 +63,7 @@ public class EventCacheRepository : IEventCacheRepository
         }
     }
 
-    public async Task SetEventByIdAsync(Guid id, Event? eventDto, TimeSpan? ttl)
+    public async Task SetEventByIdAsync(Guid id, ReturnedEvent? eventDto, TimeSpan? ttl)
     {
         try
         {

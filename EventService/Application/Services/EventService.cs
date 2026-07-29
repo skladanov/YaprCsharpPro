@@ -15,19 +15,35 @@ public class EventService : IEventService
         _logger = logger;
     }
 
-    public async Task<ICollection<Event>> GetTop10PopularAsync(CancellationToken token)
+    public async Task<ICollection<ReturnedEvent>> GetTop10PopularAsync(CancellationToken token)
     {
         // 1. Пробуем кэш
         var cached = await _cache.GetTop10PopularEventsAsync();
         if (cached.Count > 0) return cached;
 
         // 2. Если нет — идём в БД
+        var result = new List<ReturnedEvent>();
         var events = await _repository.GetTop10BySalesPercentageAsync(token);
+        if(events.Count == 0) return result;
+
+        foreach(var @event in events) 
+        {
+            var dto = new ReturnedEvent
+            {
+                Id = @event.Id,
+                Title = @event.Title,
+                Description = @event.Description,
+                TotalSeats = @event.TotalSeats,
+                AvailableSeats = @event.AvailableSeats
+            };
+
+            result.Add(dto);
+        }
 
         // 3. Пишем в кэш
-        await _cache.SetTop10PopularEventsAsync(events, _top10Ttl);
+        await _cache.SetTop10PopularEventsAsync(result, _top10Ttl);
 
-        return events;
+        return result;
     }
 
     public async Task<PaginatedResult<Event>> GetAllEventsAsync(int page = 1, int pageSize = 10, string? title = null, DateTime? from = null, DateTime? to = null, CancellationToken token = default)
@@ -67,7 +83,7 @@ public class EventService : IEventService
         };
     }
 
-    public async Task<Event> GetEventAsync(Guid id, CancellationToken token)
+    public async Task<ReturnedEvent> GetEventAsync(Guid id, CancellationToken token)
     {
         _logger.LogInformation("Attempting to retrieve event with ID: {EventId}", id);
 
@@ -79,11 +95,20 @@ public class EventService : IEventService
         if(existingEvent == null)
             throw new EventNotFoundException(id);
 
-        await _cache.SetEventByIdAsync(id, existingEvent, TimeSpan.FromMinutes(15));
+        var dto = new ReturnedEvent
+        {
+            Id = existingEvent.Id,
+            Title = existingEvent.Title,
+            Description = existingEvent.Description,
+            TotalSeats = existingEvent.TotalSeats,
+            AvailableSeats = existingEvent.AvailableSeats
+        };
+
+        await _cache.SetEventByIdAsync(id, dto, TimeSpan.FromMinutes(15));
 
         _logger.LogInformation("Successfully retrieved event with ID: {EventId}.", id);
 
-        return existingEvent;
+        return dto;
     }
 
     public async Task<Guid> AddEventAsync(CreateEvent newEventData, CancellationToken token)

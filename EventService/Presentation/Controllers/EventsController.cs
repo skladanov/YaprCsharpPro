@@ -30,7 +30,7 @@ public class EventsController : ControllerBase
 
     [HttpGet("top")]
     [AllowAnonymous]
-    public async Task<ActionResult<List<Event>>> GetTop10Popular(CancellationToken token)
+    public async Task<ActionResult<List<ReturnedEvent>>> GetTop10Popular(CancellationToken token)
     {
         var result = await _eventService.GetTop10PopularAsync(token);
         return Ok(result);
@@ -38,7 +38,7 @@ public class EventsController : ControllerBase
 
     [HttpGet("{id:Guid}")]
     [Authorize]
-    public async Task<ActionResult<Event>> GetEvent(Guid id, CancellationToken token)
+    public async Task<ActionResult<ReturnedEvent>> GetEvent(Guid id, CancellationToken token)
     {
         var userId = GetCurrentUserId();
         if (userId == null)

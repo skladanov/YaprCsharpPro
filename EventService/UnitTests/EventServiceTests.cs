@@ -23,23 +23,22 @@ public class EventServiceTests
     public async Task GetTop10BySalesPercentage_WhenCacheHit_ShouldNotCallRepository()
     {
         // Arrange
-        var cachedEvents = new List<Event>();
+        var cachedEvents = new List<ReturnedEvent>();
 
         for (int i = 1; i <= 10; i++)
         {
             var totalSeats = 15;
 
-            var @event = Event.Create(
-
-                id: Guid.NewGuid(),
-                title: $"Event {i}",
-                description: $"Описание события {i}.",
-                startAt: DateTime.UtcNow.AddDays(i),
-                endAt: DateTime.UtcNow.AddDays(i + 2),
-                totalSeats: totalSeats
-            );
-
-            @event.TryReserveSeats(totalSeats - i);
+            var @event = new ReturnedEvent
+            {
+                Id = Guid.NewGuid(),
+                Title = $"Event {i}",
+                Description = $"Описание события {i}.",
+                StartAt = DateTime.UtcNow.AddDays(i),
+                EndAt = DateTime.UtcNow.AddDays(i + 2),
+                TotalSeats = totalSeats,
+                AvailableSeats = totalSeats - i
+            };
 
             cachedEvents.Add(@event);
         }
@@ -83,7 +82,7 @@ public class EventServiceTests
             repoEvents.Add( @event );
         }
 
-        _cacheMock.Setup(c => c.GetTop10PopularEventsAsync()).ReturnsAsync(new List<Event>()); // пустой список = промах
+        _cacheMock.Setup(c => c.GetTop10PopularEventsAsync()).ReturnsAsync(new List<ReturnedEvent>()); // пустой список = промах
 
         _repoMock.Setup(r => r.GetTop10BySalesPercentageAsync(It.IsAny<CancellationToken>())).ReturnsAsync(repoEvents);
 
