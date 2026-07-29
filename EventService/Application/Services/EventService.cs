@@ -6,7 +6,6 @@ public class EventService : IEventService
     private readonly IEventRepository _repository;
     private readonly IEventCacheRepository _cache;
     private readonly ILogger<EventService> _logger;
-    private readonly TimeSpan _top10Ttl = TimeSpan.FromMinutes(5);
 
     public EventService(IEventRepository repository, IEventCacheRepository cache, ILogger<EventService> logger)
     {
@@ -41,7 +40,7 @@ public class EventService : IEventService
         }
 
         // 3. Пишем в кэш
-        await _cache.SetTop10PopularEventsAsync(result, _top10Ttl);
+        await _cache.SetTop10PopularEventsAsync(result);
 
         return result;
     }
@@ -104,7 +103,7 @@ public class EventService : IEventService
             AvailableSeats = existingEvent.AvailableSeats
         };
 
-        await _cache.SetEventByIdAsync(id, dto, TimeSpan.FromMinutes(15));
+        await _cache.SetEventByIdAsync(id, dto);
 
         _logger.LogInformation("Successfully retrieved event with ID: {EventId}.", id);
 

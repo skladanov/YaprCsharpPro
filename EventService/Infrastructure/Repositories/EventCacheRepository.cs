@@ -1,17 +1,20 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using System.Text.Json;
 
 public class EventCacheRepository : IEventCacheRepository
 {
     private readonly IDatabase _redis;
+    private readonly RedisCacheOptions _options;
     private readonly ILogger<EventCacheRepository> _logger;
     private static readonly JsonSerializerOptions _opts = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
     private const string Top10Key = "events:top10";
 
-    public EventCacheRepository(IConnectionMultiplexer redis, ILogger<EventCacheRepository> logger)
+    public EventCacheRepository(IConnectionMultiplexer redis, IOptions<RedisCacheOptions> cacheOptions, ILogger<EventCacheRepository> logger)
     {
         _logger = logger;
+        _options = cacheOptions.Value;
 
         try
         {
@@ -42,14 +45,14 @@ public class EventCacheRepository : IEventCacheRepository
         }
     }
 
-    public async Task SetTop10PopularEventsAsync(ICollection<ReturnedEvent> events, TimeSpan ttl)
+    public async Task SetTop10PopularEventsAsync(ICollection<ReturnedEvent> events)
     {
         if (_redis == null) return;
 
         try
         {
             var json = JsonSerializer.Serialize(events, _opts);
-            await _redis.StringSetAsync(Top10Key, json, ttl);
+            await _redis.StringSetAsync(Top10Key, json, _options.Top10Ttl);
         }
         catch (RedisException ex)
         {
@@ -77,7 +80,7 @@ public class EventCacheRepository : IEventCacheRepository
         }
     }
 
-    public async Task SetEventByIdAsync(Guid id, ReturnedEvent? eventDto, TimeSpan? ttl)
+    public async Task SetEventByIdAsync(Guid id, ReturnedEvent? eventDto)
     {
         if (_redis == null) return;
 
@@ -91,8 +94,7 @@ public class EventCacheRepository : IEventCacheRepository
             }
 
             var json = JsonSerializer.Serialize(eventDto, _opts);
-            var expiry = ttl ?? TimeSpan.FromHours(1);
-            await _redis.StringSetAsync(key, json, expiry);
+            await _redis.StringSetAsync(key, json, _options.EventByIdTtl);
         }
         catch (RedisException ex)
         {
