@@ -10,10 +10,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+var options = ConfigurationOptions.Parse(redisConnectionString);
+options.AbortOnConnectFail = false; // не падать при старте
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
-    var config = builder.Configuration.GetConnectionString("Redis");
-    return ConnectionMultiplexer.Connect(config);
+    return ConnectionMultiplexer.Connect(options);
 });
 
 builder.Services.AddScoped<IEventCacheRepository, EventCacheRepository>();

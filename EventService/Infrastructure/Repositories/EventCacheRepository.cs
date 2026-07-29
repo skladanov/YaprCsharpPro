@@ -11,12 +11,22 @@ public class EventCacheRepository : IEventCacheRepository
 
     public EventCacheRepository(IConnectionMultiplexer redis, ILogger<EventCacheRepository> logger)
     {
-        _redis = redis.GetDatabase();
         _logger = logger;
+
+        try
+        {
+            _redis = redis.GetDatabase();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning("Redis полностью отключён. Все операции кэша будут возвращать cache miss.");
+            _redis = null;
+        }
     }
 
     public async Task<ICollection<ReturnedEvent>> GetTop10PopularEventsAsync()
     {
+        if (_redis == null) return new List<ReturnedEvent>(); // cache miss
         try
         {
             var raw = await _redis.StringGetAsync(Top10Key);
@@ -34,6 +44,8 @@ public class EventCacheRepository : IEventCacheRepository
 
     public async Task SetTop10PopularEventsAsync(ICollection<ReturnedEvent> events, TimeSpan ttl)
     {
+        if (_redis == null) return;
+
         try
         {
             var json = JsonSerializer.Serialize(events, _opts);
@@ -47,6 +59,8 @@ public class EventCacheRepository : IEventCacheRepository
 
     public async Task<ReturnedEvent?> GetEventByIdAsync(Guid id)
     {
+        if (_redis == null) return null; // cache miss
+
         try
         {
             var key = $"events:{id}";
@@ -65,6 +79,8 @@ public class EventCacheRepository : IEventCacheRepository
 
     public async Task SetEventByIdAsync(Guid id, ReturnedEvent? eventDto, TimeSpan? ttl)
     {
+        if (_redis == null) return;
+
         try
         {
             var key = $"events:{id}";
@@ -86,6 +102,8 @@ public class EventCacheRepository : IEventCacheRepository
 
     public async Task InvalidateEventByIdAsync(Guid id)
     {
+        if (_redis == null) return;
+
         try
         {
             var key = $"events:{id}";
