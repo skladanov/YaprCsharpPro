@@ -2,17 +2,17 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: events-service
+  - job_name: events-api
     static_configs:
-      - targets: ["events-service:8080"]
+      - targets: ['host.docker.internal:5087']
     metrics_path: /metrics
 
-  - job_name: bookings-service
+  - job_name: bookings-api
     static_configs:
-      - targets: ["bookings-service:8080"]
+      - targets: ['host.docker.internal:5086']
     metrics_path: /metrics
 
-  - job_name: users-service
+  - job_name: users-api
     static_configs:
-      - targets: ["users-service:8080"]
+      - targets: ['host.docker.internal:5088']
     metrics_path: /metrics 
