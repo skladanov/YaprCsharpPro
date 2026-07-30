@@ -103,6 +103,7 @@ public class EventConsumer : BackgroundService
     {
         using var scope = _serviceScopeFactory.CreateScope();
         var repo = scope.ServiceProvider.GetRequiredService<IEventRepository>();
+        var cache = scope.ServiceProvider.GetRequiredService<IEventCacheRepository>();
 
         _logger.LogInformation("BookingCreatedEvent!");
 
@@ -122,6 +123,8 @@ public class EventConsumer : BackgroundService
 
         await repo.UpdateEventAsync(@event, ct);
 
+        await cache.InvalidateEventByIdAsync(@event.Id);
+
         await _producer.PublishAsync(new BookingConfirmedEvent(created.BookingId), ct);
     }
 
@@ -130,6 +133,7 @@ public class EventConsumer : BackgroundService
     {
         using var scope = _serviceScopeFactory.CreateScope();
         var repo = scope.ServiceProvider.GetRequiredService<IEventRepository>();
+        var cache = scope.ServiceProvider.GetRequiredService<IEventCacheRepository>();
 
         _logger.LogInformation("BookingCanceledEvent!");
 
@@ -140,5 +144,7 @@ public class EventConsumer : BackgroundService
         canceledEvent.ReleaseSeats(evt.SeatsCount);
 
         await repo.UpdateEventAsync(canceledEvent, ct);
+
+        await cache.InvalidateEventByIdAsync(canceledEvent.Id);
     }
 }

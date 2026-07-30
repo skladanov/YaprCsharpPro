@@ -50,6 +50,17 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7.2-alpine
+    container_name: eventapi-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - ${REDIS_EXTERNAL_PORT}:${REDIS_DB_PORT}
+
   kafka:
     image: confluentinc/cp-kafka:7.6.0
     container_name: eventapi-kafka
