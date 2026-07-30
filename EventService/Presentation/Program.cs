@@ -104,7 +104,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebProject API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Events-api", Version = "v1" });
 
     // 1. Описываем схему безопасности (Bearer/JWT)
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -121,17 +121,15 @@ builder.Services.AddControllers();
 builder.Logging.AddConsole();
 
 var app = builder.Build();
+app.MapPrometheusScrapingEndpoint(); // доступен по /metrics
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 }
-
-
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapPrometheusScrapingEndpoint(); // доступен по /metrics
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 app.UseSwagger();
 app.UseSwaggerUI();
