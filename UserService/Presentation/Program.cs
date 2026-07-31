@@ -109,7 +109,6 @@ builder.Services.AddControllers();
 builder.Logging.AddConsole();
 
 var app = builder.Build();
-app.MapPrometheusScrapingEndpoint();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -118,6 +117,7 @@ using (var scope = app.Services.CreateScope())
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapPrometheusScrapingEndpoint();
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 app.UseSwagger();
 app.UseSwaggerUI();

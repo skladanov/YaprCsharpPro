@@ -28,21 +28,17 @@ builder.Services.AddOpenTelemetry()
     .AddOtlpExporter(o => o.Endpoint = new Uri(builder.Configuration["Otlp:Endpoint"]!)))
 
     // --- Метрики ---
-    .WithMetrics(metrics =>
-    {
-        metrics.AddAspNetCoreInstrumentation();
-        metrics.AddRuntimeInstrumentation();
-        metrics.AddPrometheusExporter(); 
-    })
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddPrometheusExporter())
+
     // --- Ресурс (имя сервиса) ---
     .ConfigureResource(resource => resource
         .AddService(
             serviceName: "events-api",            // МЕНЯТЬ для каждого сервиса: bookings-api, users-api
             serviceVersion: "1.0.0",
             serviceInstanceId: Environment.MachineName));
-
-// Prometheus (скрейпинг)
-builder.WebHost.UseHttpSys(); // опционально, если нужен только HTTP (не обязательно)
 
 // Serilog
 builder.Host.UseSerilog((ctx, cfg) =>
@@ -121,7 +117,6 @@ builder.Services.AddControllers();
 builder.Logging.AddConsole();
 
 var app = builder.Build();
-app.MapPrometheusScrapingEndpoint(); // доступен по /metrics
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -130,6 +125,7 @@ using (var scope = app.Services.CreateScope())
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapPrometheusScrapingEndpoint();
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 app.UseSwagger();
 app.UseSwaggerUI();
