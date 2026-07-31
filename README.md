@@ -9,6 +9,10 @@
 * Docker
 * Kafka
 * Redis
+* Grafana
+* Prometheus
+* Jaeger
+* OpenTelemetry
 
 ##  Приложение состоит из 4х микросервисов:
 
@@ -114,7 +118,7 @@ API предоставляет операции для работы с серв�
    dotnet build UserService
    ```
 
-4. Запустите DB + Kafka:
+4. Запустите DBs + Kafka + Redis + Prometheus + Grafana + Jaeger:
    ```bash
    docker-compose up -d
    ```
@@ -151,3 +155,42 @@ API предоставляет операции для работы с серв�
    dotnet ef database update <PreviousMigration> --project UserService/Infrastructure --startup-project UserService/Presentation
    dotnet ef migrations remove --project UserService/Infrastructure --startup-project UserService/Presentation
    ``` 
+
+   ## Observability
+
+   ### Инструменты мониторинга и трассировки
+
+   В проекте реализован стек наблюдаемости для микросервисов (events-api, bookings-api, users-api):
+
+   * Prometheus — сбор метрик (HTTP-запросы, latency, throughput, error rate, активные запросы).
+   * Grafana — визуализация метрик, дашборды.
+   * Jaeger — распределённая трассировка запросов между сервисами.
+   * OpenTelemetry (в сервисах ASP.NET Core) — автоматическая инструментация:
+      HTTP-запросы (входящие/исходящие),
+      EF Core (запросы к БД),
+      Kafka (продюсер/консьюмер),
+      экспорт в Prometheus и Jaeger.
+
+
+   ### Порты UI-интерфейсов
+
+   Prometheus	http://localhost:9090
+   Grafana	http://localhost:3000
+   Jaeger	http://localhost:16686
+
+
+   ### Запуск наблюдаемости
+
+   Все сервисы запускаются командой ```docker compose up``` во время запуска приложения
+
+
+   ### Что отображено в дашборде Grafana
+
+   Для каждого сервиса (через лейбл job) доступны следующие метрики:
+
+      Latency (p50, p95, p99) — на основе http_server_request_duration_seconds_bucket и histogram_quantile.
+      Throughput (RPS) — rate(http_server_request_duration_seconds_count[5m]).
+      Error rate — доля 5xx-ответов относительно всех запросов.
+      Активные запросы — http_server_active_requests.
+      Дашборд экспортирован в JSON и хранится в репозитории: docs/grafana/dashboard-events-api.json
+
