@@ -2,10 +2,48 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using OpenTelemetry;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Instrumentation;
+using OpenTelemetry.Instrumentation.AspNetCore;
+using OpenTelemetry.Instrumentation.EntityFrameworkCore;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Serilog;
+using Serilog.Formatting.Compact;
 using StackExchange.Redis;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// OpenTelemetry
+builder.Services.AddOpenTelemetry()
+    // --- Трейсы ---
+    .WithTracing(tracing => tracing
+    .AddAspNetCoreInstrumentation()
+    .AddHttpClientInstrumentation()
+    .AddEntityFrameworkCoreInstrumentation()
+    .AddOtlpExporter(o => o.Endpoint = new Uri(builder.Configuration["Otlp:Endpoint"]!)))
+
+    // --- Метрики ---
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddPrometheusExporter())
+
+    // --- Ресурс (имя сервиса) ---
+    .ConfigureResource(resource => resource
+        .AddService(
+            serviceName: "events-api",            // МЕНЯТЬ для каждого сервиса: bookings-api, users-api
+            serviceVersion: "1.0.0",
+            serviceInstanceId: Environment.MachineName));
+
+// Serilog
+builder.Host.UseSerilog((ctx, cfg) =>
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+       .WriteTo.Console(new CompactJsonFormatter()));
 
 builder.Services.Configure<RedisCacheOptions>(
     builder.Configuration.GetSection("RedisCache"));
@@ -62,7 +100,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebProject API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Events-api", Version = "v1" });
 
     // 1. Описываем схему безопасности (Bearer/JWT)
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -84,10 +122,10 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 }
-
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapPrometheusScrapingEndpoint();
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 app.UseSwagger();
 app.UseSwaggerUI();
